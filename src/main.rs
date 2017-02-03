@@ -1,48 +1,8 @@
 use std::string::String;
 
 #[derive(Debug)]
-enum State {
-    Undefined,
-    Var,
-    And,
-    Or,
-    Xor,
-    ThenBegin,
-    ThenEnd,
-    ParenthesisOpen,
-    ParenthesisClose,
-}
-
-// Need to borrow the type because of ownership
-fn state_is_valid(state: &State, newState: &State) -> bool {
-
-    match (state, newState) {
-        (&State::Undefined,        &State::Var             ) => return true,
-        (&State::Undefined,        &State::ParenthesisOpen ) => return true,
-        (&State::Var,              &State::And             ) => return true,
-        (&State::Var,              &State::Or              ) => return true,
-        (&State::Var,              &State::Xor             ) => return true,
-        (&State::Var,              &State::ThenBegin       ) => return true,
-        (&State::Var,              &State::ParenthesisClose) => return true,
-        (&State::ThenBegin,        &State::ThenEnd         ) => return true,
-        (&State::ThenEnd,          &State::Var             ) => return true,
-        (&State::And,              &State::Var             ) => return true,
-        (&State::Or,               &State::Var             ) => return true,
-        (&State::Xor,              &State::Var             ) => return true,
-        (&State::ParenthesisOpen,  &State::Var             ) => return true,
-        (&State::ParenthesisClose, &State::And             ) => return true,
-        (&State::ParenthesisClose, &State::Or              ) => return true,
-        (&State::ParenthesisClose, &State::Xor             ) => return true,
-        (&State::ParenthesisClose, &State::ThenBegin       ) => return true,
-        _ => return false
-    }
- 
-}
-
-#[derive(Debug)]
 enum TokenId {
     Undefined,
-    Incomplete,
     Var,
     And,
     Or,
@@ -52,59 +12,90 @@ enum TokenId {
     ParenthesisClose
 }
 
+// Need to borrow the type because of ownership
+fn state_is_valid(state: &TokenId, newState: &TokenId) -> bool {
+
+    match (state, newState) {
+        (&TokenId::Undefined,        &TokenId::Var             ) => return true,
+        (&TokenId::Undefined,        &TokenId::ParenthesisOpen ) => return true,
+        (&TokenId::Var,              &TokenId::And             ) => return true,
+        (&TokenId::Var,              &TokenId::Or              ) => return true,
+        (&TokenId::Var,              &TokenId::Xor             ) => return true,
+        (&TokenId::Var,              &TokenId::Then            ) => return true,
+        (&TokenId::Var,              &TokenId::ParenthesisClose) => return true,
+        (&TokenId::Then,             &TokenId::Var             ) => return true,
+        (&TokenId::And,              &TokenId::Var             ) => return true,
+        (&TokenId::Or,               &TokenId::Var             ) => return true,
+        (&TokenId::Xor,              &TokenId::Var             ) => return true,
+        (&TokenId::ParenthesisOpen,  &TokenId::Var             ) => return true,
+        (&TokenId::ParenthesisClose, &TokenId::And             ) => return true,
+        (&TokenId::ParenthesisClose, &TokenId::Or              ) => return true,
+        (&TokenId::ParenthesisClose, &TokenId::Xor             ) => return true,
+        (&TokenId::ParenthesisClose, &TokenId::Then            ) => return true,
+        _ => return false
+    }
+ 
+}
+
 struct Token {
     id: TokenId,
     s: String
 }
 
 // identify the new state and the token
-fn lexer(c: char) -> (State, Token) {
+fn lexer(s: &str) -> Option<Token> {
 
-    let newState =
-    match c {
-        '+' => State::And,
-        '|' => State::Or,
-        '^' => State::Xor,
-        '=' => State::ThenBegin,
-        '>' => State::ThenEnd,
-        '(' => State::ParenthesisOpen,
-        ')' => State::ParenthesisClose,
-        _ => if c.is_uppercase() { State::Var } else { State::Undefined /* Error */ }
+    if s.len() == 0 {
+        return None
+    }
+
+    if s.len() >= 2 {
+        let option = match &s[..2] {
+            "=>" => Some(Token { id: TokenId::Then,             s: "=>".to_string() }),
+            _    => None
+        };
+        if let Some(token) = option {
+            return Some(token);
+        }
+    }
+
+    let option = match &s[..1] {
+        "+"  => Some(Token { id: TokenId::And,              s: "+".to_string()  }),
+        "|"  => Some(Token { id: TokenId::Or,               s: "|".to_string()  }),
+        "^"  => Some(Token { id: TokenId::Xor,              s: "^".to_string()  }),
+        "("  => Some(Token { id: TokenId::ParenthesisOpen,  s: "(".to_string()  }),
+        ")"  => Some(Token { id: TokenId::ParenthesisClose, s: ")".to_string()  }),
+        _ => if s.chars().next().unwrap().is_uppercase() {
+                Some(Token { id: TokenId::Var, s: s.chars().next().unwrap().to_string() })
+            } else {
+                None
+            }
     };
+    if let Some(token) = option {
+        return Some(token);
+    }
 
-    let token =
-    match newState {
-        State::Var              => Token { id: TokenId::Var,              s: c.to_string()    },
-        State::And              => Token { id: TokenId::And,              s: c.to_string()    },
-        State::Or               => Token { id: TokenId::Or,               s: c.to_string()    },
-        State::Xor              => Token { id: TokenId::Xor,              s: c.to_string()    },
-        State::ThenEnd          => Token { id: TokenId::Then,             s: "=>".to_string() },
-        State::ParenthesisOpen  => Token { id: TokenId::ParenthesisOpen,  s: c.to_string()    },
-        State::ParenthesisClose => Token { id: TokenId::ParenthesisClose, s: c.to_string()    },
-        State::Undefined        => Token { id: TokenId::Undefined,        s: c.to_string()    }, /* Error */
-        _                       => Token { id: TokenId::Incomplete,       s: c.to_string()    }
-    };
-
-    return (newState, token);
+    return Some(Token { id: TokenId::Undefined, s: s.chars().next().unwrap().to_string() });
 }
 
 // create a rule from user's input
 fn new_rule(rule_str: String) {
 
-    let mut state = State::Undefined;
+    let mut state = TokenId::Undefined;
 
-    for c in rule_str.chars() {
-        let (newState, token) = lexer(c);
+    let mut i = 0;
+    while let Some(token) = lexer(&rule_str[i..]) {
 
         println!("New token: {} id {:?}", token.s, token.id);
 
-        if !state_is_valid(&state, &newState) {
+        if !state_is_valid(&state, &token.id) {
             println!("Unexpected token: '{}'", token.s);
         }
 
         // parse()
 
-        state = newState;
+        state = token.id;
+        i += token.s.len();
     }
 }
 
