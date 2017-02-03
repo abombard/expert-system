@@ -13,6 +13,7 @@ enum State {
     ParenthesisClose,
 }
 
+// Need to borrow the type because of ownership
 fn state_is_valid(state: &State, newState: &State) -> bool {
 
     match (state, newState) {
@@ -56,6 +57,7 @@ struct Token {
     s: String
 }
 
+// identify the new state and the token
 fn lexer(c: char) -> (State, Token) {
 
     let newState =
@@ -86,6 +88,7 @@ fn lexer(c: char) -> (State, Token) {
     return (newState, token);
 }
 
+// create a rule from user's input
 fn new_rule(rule_str: String) {
 
     let mut state = State::Undefined;
@@ -115,6 +118,7 @@ fn main() {
     let re = Regex::new("[[:space:]]").unwrap();
     let stdin = std::io::stdin();
 
+    // read lines
     print!("> ");
     std::io::stdout().flush().unwrap();
     for line in stdin.lock().lines() {
