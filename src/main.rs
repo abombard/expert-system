@@ -1,6 +1,44 @@
 use std::string::String;
 
 #[derive(Debug)]
+enum State {
+    Undefined,
+    Var,
+    And,
+    Or,
+    Xor,
+    ThenBegin,
+    ThenEnd,
+    ParenthesisOpen,
+    ParenthesisClose,
+}
+
+fn state_is_valid(state: &State, newState: &State) -> bool {
+
+    match (state, newState) {
+        (&State::Undefined,        &State::Var             ) => return true,
+        (&State::Undefined,        &State::ParenthesisOpen ) => return true,
+        (&State::Var,              &State::And             ) => return true,
+        (&State::Var,              &State::Or              ) => return true,
+        (&State::Var,              &State::Xor             ) => return true,
+        (&State::Var,              &State::ThenBegin       ) => return true,
+        (&State::Var,              &State::ParenthesisClose) => return true,
+        (&State::ThenBegin,        &State::ThenEnd         ) => return true,
+        (&State::ThenEnd,          &State::Var             ) => return true,
+        (&State::And,              &State::Var             ) => return true,
+        (&State::Or,               &State::Var             ) => return true,
+        (&State::Xor,              &State::Var             ) => return true,
+        (&State::ParenthesisOpen,  &State::Var             ) => return true,
+        (&State::ParenthesisClose, &State::And             ) => return true,
+        (&State::ParenthesisClose, &State::Or              ) => return true,
+        (&State::ParenthesisClose, &State::Xor             ) => return true,
+        (&State::ParenthesisClose, &State::ThenBegin       ) => return true,
+        _ => return false
+    }
+ 
+}
+
+#[derive(Debug)]
 enum TokenId {
     Undefined,
     Incomplete,
@@ -18,38 +56,7 @@ struct Token {
     s: String
 }
 
-#[derive(Debug)]
-enum State {
-    Undefined,
-    Var,
-    And,
-    Or,
-    Xor,
-    ThenBegin,
-    ThenEnd,
-    ParenthesisOpen,
-    ParenthesisClose,
-}
-
-fn state_is_valid(state: State, newState: State) -> bool {
-
-    match (state, newState) {
-        (State::Undefined,       State::Var      ) => return true,
-        (State::Var,             State::And      ) => return true,
-        (State::Var,             State::Or       ) => return true,
-        (State::Var,             State::Xor      ) => return true,
-        (State::Var,             State::ThenBegin) => return true,
-        (State::ThenBegin,       State::ThenEnd  ) => return true,
-        (State::And,             State::Var      ) => return true,
-        (State::Or,              State::Var      ) => return true,
-        (State::Xor,             State::Var      ) => return true,
-        (State::ParenthesisOpen, State::Var      ) => return true,
-        _ => return false
-    }
- 
-}
-
-fn lexer(c: char, state: State) -> (State, Token) {
+fn lexer(c: char) -> (State, Token) {
 
     let newState =
     match c {
@@ -84,11 +91,11 @@ fn new_rule(rule_str: String) {
     let mut state = State::Undefined;
 
     for c in rule_str.chars() {
-        let (newState, token) = lexer(c, state);
+        let (newState, token) = lexer(c);
 
         println!("New token: {} id {:?}", token.s, token.id);
 
-        if !state_is_valid(state, newState) {
+        if !state_is_valid(&state, &newState) {
             println!("Unexpected token: '{}'", token.s);
         }
 
@@ -99,16 +106,21 @@ fn new_rule(rule_str: String) {
 extern crate regex;
 
 use std::io::BufRead;
+use std::io::Write;
 use regex::Regex;
 
 fn main() {
     let re = Regex::new("[[:space:]]").unwrap();
     let stdin = std::io::stdin();
 
+    print!("> ");
+    std::io::stdout().flush().unwrap();
     for line in stdin.lock().lines() {
         let s = line.unwrap();
         let rule = re.replace_all(&s, "");
 
         new_rule(rule.to_string());
+        print!("> ");
+        std::io::stdout().flush().unwrap();
     }
 }
