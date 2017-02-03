@@ -99,14 +99,16 @@ fn new_rule(rule_str: String) {
             println!("Unexpected token: '{}'", token.s);
         }
 
+        // parse()
+
         state = newState;
     }
 }
 
 extern crate regex;
 
-use std::io::BufRead;
-use std::io::Write;
+use std::io::BufRead; /* stdin().lock() */
+use std::io::Write;   /* stdout().flush() */
 use regex::Regex;
 
 fn main() {
@@ -120,6 +122,7 @@ fn main() {
         let rule = re.replace_all(&s, "");
 
         new_rule(rule.to_string());
+
         print!("> ");
         std::io::stdout().flush().unwrap();
     }
