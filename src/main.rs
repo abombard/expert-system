@@ -34,8 +34,6 @@ fn parse(token: &str) {
 // create a rule from user's input
 fn new_rule(rule_str: String) {
 
-    let mut state = TokenId::Undefined;
-
     let mut i = 0;
     while i < rule_str.len() {
         let token = match lexer(&rule_str[i..]) {
@@ -50,10 +48,9 @@ fn new_rule(rule_str: String) {
 
         parse(&token);
 
-        state = token.id;
-        i += token.s.len();
-
+        i += token.len();
     }
+
 }
 
 extern crate regex;
