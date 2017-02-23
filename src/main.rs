@@ -1,89 +1,24 @@
-use std::string::String;
-
-/*
-** tree
-*/
-
-
 /*
 ** lexer
 */
-#[derive(Debug)]
-enum TokenId {
-    Undefined,
-    Var,
-    And,
-    Or,
-    Xor,
-    Then,
-    ParenthesisOpen,
-    ParenthesisClose,
-    Equal,
-    InterrogationPoint
-}
-
-// simple check on 2 near token
-fn state_is_valid(state: &TokenId, newState: &TokenId) -> bool {
-
-    match (state, newState) {
-        (&TokenId::Undefined,          &TokenId::Var               ) => return true,
-        (&TokenId::Undefined,          &TokenId::ParenthesisOpen   ) => return true,
-        (&TokenId::Undefined,          &TokenId::Equal             ) => return true,
-        (&TokenId::Undefined,          &TokenId::InterrogationPoint) => return true,
-        (&TokenId::Equal,              &TokenId::Var               ) => return true,
-        (&TokenId::InterrogationPoint, &TokenId::Var               ) => return true,
-        (&TokenId::Var,                &TokenId::And               ) => return true,
-        (&TokenId::Var,                &TokenId::Or                ) => return true,
-        (&TokenId::Var,                &TokenId::Xor               ) => return true,
-        (&TokenId::Var,                &TokenId::Then              ) => return true,
-        (&TokenId::Var,                &TokenId::ParenthesisClose  ) => return true,
-        (&TokenId::Then,               &TokenId::Var               ) => return true,
-        (&TokenId::And,                &TokenId::Var               ) => return true,
-        (&TokenId::Or,                 &TokenId::Var               ) => return true,
-        (&TokenId::Xor,                &TokenId::Var               ) => return true,
-        (&TokenId::ParenthesisOpen,    &TokenId::Var               ) => return true,
-        (&TokenId::ParenthesisClose,   &TokenId::And               ) => return true,
-        (&TokenId::ParenthesisClose,   &TokenId::Or                ) => return true,
-        (&TokenId::ParenthesisClose,   &TokenId::Xor               ) => return true,
-        (&TokenId::ParenthesisClose,   &TokenId::Then              ) => return true,
-        _ => return false
-    }
- 
-}
-
-struct Token {
-    id: TokenId,
-    s: String
-}
-
-// identify the new state and the token
-fn lexer(s: &str) -> Option<Token> {
+fn lexer(s: &str) -> Option<&str> {
 
     if s.len() >= 2 {
-        let option = match &s[..2] {
-            "=>" => Some(TokenId::Then),
-            _    => None
+        let ok = match &s[..2] {
+            "=>" => true,
+            _    => false
         };
-        if let Some(tokenId) = option {
-            return Some(Token { id: tokenId, s: s[..2].to_string() });
+        if ok {
+            return Some(&s[..2]);
         }
     }
 
-    let option = match &s[..1] {
-        "+"  => Some(TokenId::And),
-        "|"  => Some(TokenId::Or),
-        "^"  => Some(TokenId::Xor),
-        "("  => Some(TokenId::ParenthesisOpen),
-        ")"  => Some(TokenId::ParenthesisClose),
-        "="  => Some(TokenId::Equal),
-        "?"  => Some(TokenId::InterrogationPoint),
-        _ => match s.chars().next().unwrap().is_uppercase() {
-                true  => Some(TokenId::Var),
-                false => None
-            }
+    let ok = match &s[..1] {
+        "+" | "|" | "^" | "(" | ")" | "=" | "?" => true,
+        _ => s.chars().next().unwrap().is_uppercase()
     };
-    if let Some(tokenId) = option {
-        return Some(Token { id: tokenId, s: s[..1].to_string() });
+    if ok {
+        return Some(&s[..1]);
     }
 
     return None;
@@ -92,7 +27,7 @@ fn lexer(s: &str) -> Option<Token> {
 /*
 ** parser
 */
-fn parse(token: &Token) {
+fn parse(token: &str) {
     
 }
 
@@ -111,11 +46,7 @@ fn new_rule(rule_str: String) {
             }
         };
 
-        println!("New token {}, id {:?}", token.s, token.id);
-
-        if !state_is_valid(&state, &token.id) {
-            println!("Unexpected token: '{}'", token.s);
-        }
+        println!("New token {}", token);
 
         parse(&token);
 
