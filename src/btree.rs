@@ -43,17 +43,33 @@ impl BTreeNode {
         }
     }
 
+    fn is_leaf(&self) -> bool {
+        self.l.is_none() && self.r.is_none()
+    }
+    fn is_node(&self) -> bool {
+        !self.is_leaf()
+    }
+
     pub fn display(&self, prev_token: &String) {
+
         if let Some(ref left) = self.l {
-            left.display(&self.t);
+            if let Some(ref right) = self.r {
+                if self.t != "=>" && left.is_leaf() && right.is_node() {
+                    right.display(&self.t);
+                    left.display(&self.t);
+                }
+                else {
+                    left.display(&self.t);
+                    right.display(&self.t);
+                }
+            }
+            else {
+                left.display(&self.t);
+            }
         }
-		print!("{}", self.t);
-        if let Some(ref right) = self.r {
-            right.display(&self.t);
+        if *prev_token != self.t {
+          print!("{}", self.t);
         }
-//        if *prev_token != self.t {
-//          print!("{}", self.t);
-// }
     }
 }   
 
@@ -70,18 +86,18 @@ impl BTree {
 		match token {
 			"(" => self.root_list.push_front(None),
 			")" => {
-				let mut arthur_root = self.root_list.pop_front().unwrap().unwrap();
+				let mut sub_root = self.root_list.pop_front().unwrap().unwrap();
 
-				arthur_root.v = 0;
+				sub_root.v = 0;
 
 				if let Some(target_option) = self.root_list.pop_front() {
 						let mut target = target_option.unwrap();
-						println!("bonjour arthur");
-						target = target.insert(arthur_root);
+
+						target = target.insert(sub_root);
 						self.root_list.push_front(Some(target));
 				}
 				else {
-					self.root_list.push_front(Some(arthur_root));
+					self.root_list.push_front(Some(sub_root));
 				}
 			},
 			_ => {
@@ -118,10 +134,10 @@ impl BTree {
 
     pub fn display(&self) {
         if let Some(root_option) = self.root_list.front() {
-				if let Some(root) = root_option.as_ref() {
-						root.display(&"".to_string());
-					println!();
-				}
+			if let Some(root) = root_option.as_ref() {
+				root.display(&"".to_string());
+				println!("");
+			}
         }
     }
 }
