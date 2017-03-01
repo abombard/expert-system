@@ -24,16 +24,12 @@ fn lexer(s: &str) -> Option<&str> {
     return None;
 }
 
-
-
-/*
-** parser
-*/
-fn parse(token: &str) {
-}
+mod btree;
 
 // create a rule from user's input
 fn new_rule(rule_str: String) {
+
+    let mut tree = btree::BTree::new();
 
     let mut i = 0;
     while i < rule_str.len() {
@@ -47,11 +43,12 @@ fn new_rule(rule_str: String) {
 
         println!("New token {}", token);
 
-        parse(&token);
+        tree.insert(token);
 
         i += token.len();
     }
 
+    tree.display();
 }
 
 extern crate regex;

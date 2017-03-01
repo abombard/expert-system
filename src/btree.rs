@@ -73,12 +73,12 @@ impl BTreeNode {
     }
 }   
 
-struct BTree {
+pub struct BTree {
 	root_list: LinkedList<Option<BTreeNode>>
 }
 
 impl BTree {
-	fn new() -> BTree {
+	pub fn new() -> BTree {
 		BTree { root_list: LinkedList::new() }
 	}
 
