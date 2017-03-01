@@ -30,7 +30,6 @@ fn lexer(s: &str) -> Option<&str> {
 ** parser
 */
 fn parse(token: &str) {
-    
 }
 
 // create a rule from user's input
@@ -61,6 +60,71 @@ use std::io::BufRead; /* stdin().lock() */
 use std::io::Write;   /* stdout().flush() */
 use regex::Regex;
 
+#[derive(PartialEq)]
+enum Expect {
+	Letter,
+	Operator,
+	Greater
+}
+
+fn check_syntax(str: &str) -> bool {
+	let mut p = 0;
+	let mut expect = Expect::Letter;
+	let mut allow_parenthesis = true;
+
+	for c in str.chars() {
+		match c {
+			'=' => {
+				if expect != Expect::Operator || allow_parenthesis == false || p != 0 {
+					return false;
+				}
+				expect = Expect::Greater;
+			},
+			'>' => {
+				if expect != Expect::Greater {
+					return false;
+				}
+				expect = Expect::Letter;
+				allow_parenthesis = false;
+			},
+			'(' => {
+				if expect != Expect::Letter || allow_parenthesis == false {
+					return false;
+				}
+				p += 1;
+			},
+			')' => {
+				if expect != Expect::Operator || allow_parenthesis == false || p == 0 {
+					return false;
+				}
+				p -= 1;
+			},
+			'+' | '|' | '^' => {
+				if expect != Expect::Operator {
+						return false;
+				}
+				expect = Expect::Letter;
+			},
+			_ => {
+				if c.is_uppercase() {
+					if expect != Expect::Letter {
+						return false;
+					}
+					expect = Expect::Operator;
+				}
+				else {
+					return false;
+				}
+			}
+		};
+	}
+	if expect != Expect::Operator || allow_parenthesis == true {
+		return false;
+	}
+
+	return true;
+}
+
 fn main() {
     let re = Regex::new("[[:space:]]").unwrap();
     let stdin = std::io::stdin();
@@ -70,9 +134,14 @@ fn main() {
     std::io::stdout().flush().unwrap();
     for line in stdin.lock().lines() {
         let s = line.unwrap();
-        let rule = re.replace_all(&s, "");
+        let rule = re.replace_all(&s, "").to_string();
 
-        new_rule(rule.to_string());
+		if ! check_syntax(rule.as_str()) {
+			println!("syntax_error");
+			continue;
+		}
+
+        new_rule(rule);
 
         print!("> ");
         std::io::stdout().flush().unwrap();
