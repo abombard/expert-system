@@ -91,10 +91,13 @@ impl BTree {
 				sub_root.v = 0;
 
 				if let Some(target_option) = self.root_list.pop_front() {
-						let mut target = target_option.unwrap();
-
-						target = target.insert(sub_root);
-						self.root_list.push_front(Some(target));
+					match target_option {
+						Some(mut target) => {
+							target = target.insert(sub_root);
+							self.root_list.push_front(Some(target));
+						},
+						None => self.root_list.push_front(Some(sub_root))
+					};
 				}
 				else {
 					self.root_list.push_front(Some(sub_root));
