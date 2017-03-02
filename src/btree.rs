@@ -70,7 +70,7 @@ impl BTreeNode {
             }
         }
         if *prev_token != self.t || prev_neg != self.n {
-          print!("{}{}", if self.n { "!" } else { "" }, self.t);
+          print!("{}{}", self.t, if self.n { "!" } else { "" });
         }
     }
 
@@ -117,7 +117,7 @@ impl BTree {
                 let mut root1_node = root1.root.unwrap();
 
                 if root1.neg {
-                    root1_node.n = !root1.neg;
+                    root1_node.n = !root1_node.n;
                 }
 				root1_node.v = 0;
 
