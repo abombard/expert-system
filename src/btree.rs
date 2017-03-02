@@ -125,8 +125,8 @@ impl BTree {
 							root2_node = root2_node.insert(root1_node);
 							self.root_list.push_front(
 							    SubRoot {
-							        neg: root2.neg,
-							        root: Some(root2_node)
+							        root: Some(root2_node),
+							        neg: root2.neg
 							    }
 							);
 						},
@@ -148,8 +148,6 @@ impl BTree {
 				}
 			},
 			_ => {
-				let old_root = self.root_list.pop_front();
-
 				let value = match token {
 					"=>" => 5,
 					"|"  => 4,
@@ -161,23 +159,29 @@ impl BTree {
 				let node = BTreeNode::new(token, value, self.neg);
                 self.neg = true;
 
-                let (neg, new_root) = {
-                    if let Some(sub_root) = old_root {
-                        match sub_root.root {
-                            Some(root) => (sub_root.neg, root.insert(node)),
-                            None => (sub_root.neg, node)
+                if self.root_list.len() == 0 {
+                    self.root_list.push_front(
+                        SubRoot {
+                            root: Some(node),
+                            neg: true
                         }
-                    } else {
-                        (true, node)
-                    }
-                };
+                    );
+                }
+                else {
+                    let old_root = self.root_list.pop_front().unwrap();
 
-				self.root_list.push_front(
-				    SubRoot {
-				        root: Some(new_root),
-				        neg: neg
-				    }
-				);
+                    let new_root = match old_root.root {
+                        Some(root) => root.insert(node),
+                        None => node
+                    };
+
+                    self.root_list.push_front(
+                        SubRoot {
+                            root: Some(new_root),
+                            neg: old_root.neg
+                        }
+                    );
+                }
 			}
 		}
 	}
