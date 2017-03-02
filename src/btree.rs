@@ -1,16 +1,22 @@
 use std::cmp::Ordering;
-use std::collections::LinkedList;
 
 struct BTreeNode {
     v: u8,
     t: String,
+    n: bool,
     l: Option<Box<BTreeNode>>,
     r: Option<Box<BTreeNode>>
 }
 
 impl BTreeNode {
-	fn new(token: &str, value: u8) -> BTreeNode {
-		BTreeNode { t: token.to_string(), v: value, l: None, r: None }
+	fn new(token: &str, value: u8, neg: bool) -> BTreeNode {
+		BTreeNode {
+		    t: token.to_string(),
+		    v: value,
+		    n: neg,
+		    l: None,
+		    r: None
+		}
 	}
 
     pub fn insert(mut self, new_node: BTreeNode) -> BTreeNode {
@@ -23,6 +29,7 @@ impl BTreeNode {
                 BTreeNode {
                     v: new_node.v,
                     t: new_node.t,
+                    n: new_node.n,
                     l: Some(Box::new(self)),
                     r: None
                 }
@@ -68,27 +75,49 @@ impl BTreeNode {
             }
         }
         if *prev_token != self.t {
-          print!("{}", self.t);
+          print!("{}{}", if self.n { "" } else { "!" }, self.t);
         }
     }
+
 }   
 
+use std::collections::LinkedList;
+
 pub struct BTree {
-	root_list: LinkedList<Option<BTreeNode>>
+	root_list: LinkedList<Option<BTreeNode>>,
+	neg_root: bool,
+	neg: bool
 }
 
 impl BTree {
 	pub fn new() -> BTree {
-		BTree { root_list: LinkedList::new() }
+		BTree {
+		    root_list: LinkedList::new(),
+		    neg_root: true,
+		    neg: true
+		}
 	}
 
     pub fn insert(&mut self, token: &str) {
+
 		match token {
-			"(" => self.root_list.push_front(None),
+			"!" => {
+                self.neg = !self.neg;
+                return ;
+            }
+			"(" => {
+			    self.neg_root = self.neg;
+			    self.neg = true;
+
+			    self.root_list.push_front(None);
+            },
 			")" => {
 				let mut sub_root = self.root_list.pop_front().unwrap().unwrap();
 
+				sub_root.n = self.neg_root;
 				sub_root.v = 0;
+
+				self.neg_root = true;
 
 				if let Some(target_option) = self.root_list.pop_front() {
 					match target_option {
@@ -114,7 +143,9 @@ impl BTree {
 					_    => 1
 				};
 
-				let node = BTreeNode::new(token, value);
+				let node = BTreeNode::new(token, value, self.neg);
+                self.neg = true;
+
 				let new_root =
 				match old_root {
 					Some(root) => match root {
