@@ -14,7 +14,7 @@ fn lexer(s: &str) -> Option<&str> {
     }
 
     let ok = match &s[..1] {
-        "+" | "|" | "^" | "(" | ")" | "=" | "?" => true,
+        "+" | "|" | "^" | "(" | ")" | "=" | "?" | "!" => true,
         _ => s.chars().next().unwrap().is_uppercase()
     };
     if ok {
@@ -96,9 +96,14 @@ fn check_syntax(str: &str) -> bool {
 				}
 				p -= 1;
 			},
+			'!' => {
+				if expect != Expect::Letter {
+					return false;
+				}
+			},
 			'+' | '|' | '^' => {
 				if expect != Expect::Operator {
-						return false;
+					return false;
 				}
 				expect = Expect::Letter;
 			},
