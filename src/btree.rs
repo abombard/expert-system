@@ -70,7 +70,7 @@ impl BTreeNode {
             }
         }
         if *prev_token != self.t || prev_neg != self.n {
-          print!("{}{}", if self.n { "" } else { "!" }, self.t);
+          print!("{}{}", if self.n { "!" } else { "" }, self.t);
         }
     }
 
@@ -92,7 +92,7 @@ impl BTree {
 	pub fn new() -> BTree {
 		BTree {
 		    root_list: LinkedList::new(),
-		    neg: true
+		    neg: false
 		}
 	}
 
@@ -110,13 +110,15 @@ impl BTree {
 			            neg: self.neg
 			        }
 			    );
-			    self.neg = true;
+			    self.neg = false;
             },
 			")" => {
 				let root1 = self.root_list.pop_front().unwrap();
                 let mut root1_node = root1.root.unwrap();
 
-                root1_node.n = root1.neg;
+                if root1.neg {
+                    root1_node.n = !root1.neg;
+                }
 				root1_node.v = 0;
 
 				if let Some(root2) = self.root_list.pop_front() {
@@ -133,7 +135,7 @@ impl BTree {
 						None => self.root_list.push_front(
 						    SubRoot {
 						        root: Some(root1_node),
-						        neg: root1.neg
+						        neg: root2.neg
 						    }
 						)
 					};
@@ -142,7 +144,7 @@ impl BTree {
 					self.root_list.push_front(
 					    SubRoot {
 					        root: Some(root1_node),
-					        neg: root1.neg
+					        neg: false
 					    }
 					);
 				}
@@ -163,7 +165,7 @@ impl BTree {
                     self.root_list.push_front(
                         SubRoot {
                             root: Some(node),
-                            neg: true
+                            neg: false
                         }
                     );
                 }
