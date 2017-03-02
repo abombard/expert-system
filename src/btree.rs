@@ -159,7 +159,7 @@ impl BTree {
 				};
 
 				let node = BTreeNode::new(token, value, self.neg);
-                self.neg = true;
+                self.neg = false;
 
                 if self.root_list.len() == 0 {
                     self.root_list.push_front(
