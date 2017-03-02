@@ -1,4 +1,8 @@
+use std::collections::LinkedList;
 use std::cmp::Ordering;
+
+use variables;
+use variables::{ VariableState };
 
 struct BTreeNode {
     v: u8,
@@ -54,29 +58,74 @@ impl BTreeNode {
 
     pub fn display(&self, prev_token: &String, prev_neg: bool) {
 
-        if let Some(ref left) = self.l {
-            if let Some(ref right) = self.r {
-                if self.t != "=>" && left.is_leaf() && right.is_node() {
-					right.display(&self.t, self.n);
-					left.display(&self.t, self.n);
-                }
-                else {
-                    left.display(&self.t, self.n);
-                    right.display(&self.t, self.n);
-                }
+        if self.is_node() {
+            let left = self.l.as_ref().unwrap();
+            let right = self.r.as_ref().unwrap();
+
+            if self.t != "=>" && left.is_leaf() && right.is_node() {
+                right.display(&self.t, self.n);
+                left.display(&self.t, self.n);
             }
             else {
                 left.display(&self.t, self.n);
+                right.display(&self.t, self.n);
             }
         }
+
         if *prev_token != self.t || prev_neg != self.n {
           print!("{}{}", self.t, if self.n { "!" } else { "" });
         }
     }
 
+    fn solve_and(lhs: VariableState, rhs: VariableState) -> VariableState {
+        match (lhs, rhs) {
+            (VariableState::True, VariableState::True) => VariableState::True,
+            (_, VariableState::False) => VariableState::False,
+            (VariableState::False, _) => VariableState::False,
+            (VariableState::Unsolved, _) => VariableState::Unsolved,
+            (_, VariableState::Unsolved) => VariableState::Unsolved,
+            _ => VariableState::Undefined
+        }
+    }
+
+    fn solve_or(lhs: VariableState, rhs: VariableState) -> VariableState {
+        match (lhs, rhs) {
+            (VariableState::True, _) => VariableState::True,
+            (_, VariableState::True) => VariableState::True,
+            (VariableState::Unsolved, _) => VariableState::Unsolved,
+            (_, VariableState::Unsolved) => VariableState::Unsolved,
+            (VariableState::Undefined, _) => VariableState::Undefined,
+            (_, VariableState::Undefined) => VariableState::Undefined,
+            _ => VariableState::False
+        }
+    }
+
+    fn solve_xor(lhs: VariableState, rhs: VariableState) -> VariableState {
+        match (lhs, rhs) {
+            _ => VariableState::Undefined
+        }
+    }
+
+    pub fn solve(&self) -> VariableState {
+        if self.is_leaf() {
+            variables::State[&self.t[..]].clone()
+        }
+        else {
+            let left = self.l.as_ref().unwrap();
+            let right = self.r.as_ref().unwrap();
+
+            match &self.t[..] {
+                "+" => BTreeNode::solve_and(left.solve(), right.solve()),
+                "|" => BTreeNode::solve_or(left.solve(), right.solve()),
+                "^" => BTreeNode::solve_xor(left.solve(), right.solve()),
+                _ => panic!("Unexpected token {}", self.t)
+            }
+
+        }
+    }
+
 }   
 
-use std::collections::LinkedList;
 
 struct SubRoot {
     root: Option<BTreeNode>,
@@ -195,6 +244,11 @@ impl BTree {
 				println!("");
 			}
         }
+    }
+
+    pub fn solve(&self) -> VariableState {
+        let root = self.root_list.front().unwrap().root.as_ref().unwrap();
+        root.solve()
     }
 }
 

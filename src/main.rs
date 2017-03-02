@@ -24,12 +24,20 @@ fn lexer(s: &str) -> Option<&str> {
     return None;
 }
 
+#[macro_use]
+extern crate lazy_static;
+
+mod variables;
+
 mod btree;
 
 // create a rule from user's input
 fn new_rule(rule_str: String) {
 
     let mut tree = btree::BTree::new();
+
+    let ref state = variables::State["A"];
+    println!("VariableState::{:?}", state);
 
     let mut i = 0;
     while i < rule_str.len() {
@@ -130,6 +138,7 @@ fn check_syntax(str: &str) -> bool {
 fn main() {
     let re = Regex::new("[[:space:]]").unwrap();
     let stdin = std::io::stdin();
+
 
     // read lines
     print!("> ");
