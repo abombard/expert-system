@@ -23,9 +23,6 @@ impl BTreeNode {
         match self.v.cmp(&new_node.v) {
             Ordering::Less |
             Ordering::Equal => {
-                assert!((self.l.is_some() && self.r.is_some()) ||
-                        (self.v == 1 && new_node.v != 1),
-                        "Unexpected token near '{}': '{}'", self.t, new_node.t);
                 BTreeNode {
                     v: new_node.v,
                     t: new_node.t,
@@ -40,8 +37,6 @@ impl BTreeNode {
                         Some(Box::new(node.insert(new_node)))
                     },
                     None => {
-                        assert!(new_node.v <= 1,
-                                "Unexpected token near '{}': '{}'", self.t, new_node.t);
                         Some(Box::new(new_node))
                     }
                 };
@@ -83,9 +78,13 @@ impl BTreeNode {
 
 use std::collections::LinkedList;
 
+struct SubRoot {
+    root: Option<BTreeNode>,
+    neg: bool
+}
+
 pub struct BTree {
-	root_list: LinkedList<Option<BTreeNode>>,
-	neg_root: bool,
+	root_list: LinkedList<SubRoot>,
 	neg: bool
 }
 
@@ -93,7 +92,6 @@ impl BTree {
 	pub fn new() -> BTree {
 		BTree {
 		    root_list: LinkedList::new(),
-		    neg_root: true,
 		    neg: true
 		}
 	}
@@ -106,30 +104,47 @@ impl BTree {
                 return ;
             }
 			"(" => {
-			    self.neg_root = self.neg;
+			    self.root_list.push_front(
+			        SubRoot {
+			            root: None,
+			            neg: self.neg
+			        }
+			    );
 			    self.neg = true;
-
-			    self.root_list.push_front(None);
             },
 			")" => {
-				let mut sub_root = self.root_list.pop_front().unwrap().unwrap();
+				let root1 = self.root_list.pop_front().unwrap();
+                let mut root1_node = root1.root.unwrap();
 
-				sub_root.n = self.neg_root;
-				sub_root.v = 0;
+                root1_node.n = root1.neg;
+				root1_node.v = 0;
 
-				self.neg_root = true;
-
-				if let Some(target_option) = self.root_list.pop_front() {
-					match target_option {
-						Some(mut target) => {
-							target = target.insert(sub_root);
-							self.root_list.push_front(Some(target));
+				if let Some(root2) = self.root_list.pop_front() {
+					match root2.root {
+						Some(mut root2_node) => {
+							root2_node = root2_node.insert(root1_node);
+							self.root_list.push_front(
+							    SubRoot {
+							        neg: root2.neg,
+							        root: Some(root2_node)
+							    }
+							);
 						},
-						None => self.root_list.push_front(Some(sub_root))
+						None => self.root_list.push_front(
+						    SubRoot {
+						        root: Some(root1_node),
+						        neg: root1.neg
+						    }
+						)
 					};
 				}
 				else {
-					self.root_list.push_front(Some(sub_root));
+					self.root_list.push_front(
+					    SubRoot {
+					        root: Some(root1_node),
+					        neg: root1.neg
+					    }
+					);
 				}
 			},
 			_ => {
@@ -146,29 +161,30 @@ impl BTree {
 				let node = BTreeNode::new(token, value, self.neg);
                 self.neg = true;
 
-				let new_root =
-				match old_root {
-					Some(root) => match root {
-						Some(root) => root.insert(node),
-						None => {
-							assert!(value == 1, "Unexpected token: '{}'", token);
-							node
-						}
-					},
-					None => {
-						assert!(value == 1, "Unexpected token: '{}'", token);
-						node
-					}
-				};
+                let (neg, new_root) = {
+                    if let Some(sub_root) = old_root {
+                        match sub_root.root {
+                            Some(root) => (sub_root.neg, root.insert(node)),
+                            None => (sub_root.neg, node)
+                        }
+                    } else {
+                        (true, node)
+                    }
+                };
 
-				self.root_list.push_front(Some(new_root));
+				self.root_list.push_front(
+				    SubRoot {
+				        root: Some(new_root),
+				        neg: neg
+				    }
+				);
 			}
 		}
 	}
 
     pub fn display(&self) {
         if let Some(root_option) = self.root_list.front() {
-			if let Some(root) = root_option.as_ref() {
+			if let Some(root) = root_option.root.as_ref() {
 				root.display(&"".to_string());
 				println!("");
 			}
