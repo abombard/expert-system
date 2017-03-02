@@ -52,24 +52,24 @@ impl BTreeNode {
         !self.is_leaf()
     }
 
-    pub fn display(&self, prev_token: &String) {
+    pub fn display(&self, prev_token: &String, prev_neg: bool) {
 
         if let Some(ref left) = self.l {
             if let Some(ref right) = self.r {
                 if self.t != "=>" && left.is_leaf() && right.is_node() {
-                    right.display(&self.t);
-                    left.display(&self.t);
+					right.display(&self.t, self.n);
+					left.display(&self.t, self.n);
                 }
                 else {
-                    left.display(&self.t);
-                    right.display(&self.t);
+                    left.display(&self.t, self.n);
+                    right.display(&self.t, self.n);
                 }
             }
             else {
-                left.display(&self.t);
+                left.display(&self.t, self.n);
             }
         }
-        if *prev_token != self.t {
+        if *prev_token != self.t || prev_neg != self.n {
           print!("{}{}", if self.n { "" } else { "!" }, self.t);
         }
     }
@@ -185,7 +185,7 @@ impl BTree {
     pub fn display(&self) {
         if let Some(root_option) = self.root_list.front() {
 			if let Some(root) = root_option.root.as_ref() {
-				root.display(&"".to_string());
+				root.display(&"".to_string(), true);
 				println!("");
 			}
         }
