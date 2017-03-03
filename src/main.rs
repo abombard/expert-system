@@ -28,23 +28,24 @@ fn lexer(s: &str) -> Option<&str> {
 extern crate lazy_static;
 
 mod variables;
+use variables::{ VariableMap, VariableState };
 
 mod btree;
+use btree::BTree;
 
 // create a rule from user's input
-fn new_rule(rule_str: String) {
+fn new_rule(rule: &str) -> BTree {
 
-    let mut tree = btree::BTree::new();
-
-    let ref state = variables::State["A"];
-    println!("VariableState::{:?}", state);
+    let mut tree = BTree::new();
 
     let mut i = 0;
-    while i < rule_str.len() {
-        let token = match lexer(&rule_str[i..]) {
+    while i < rule.len() {
+
+        let token = match lexer(&rule[i..]) {
+
             Some(token) => token,
             None => {
-                println!("Invalid token: '{}'", &rule_str[i..]);
+                println!("Invalid token: '{}'", &rule[i..]);
                 break ;
             }
         };
@@ -57,6 +58,11 @@ fn new_rule(rule_str: String) {
     }
 
     tree.display();
+
+    let result = tree.solve();
+    println!("Result: {:?}", result);
+
+    tree
 }
 
 extern crate regex;
@@ -64,6 +70,7 @@ extern crate regex;
 use std::io::BufRead; /* stdin().lock() */
 use std::io::Write;   /* stdout().flush() */
 use regex::Regex;
+use std::collections::LinkedList;
 
 #[derive(PartialEq)]
 enum Expect {
@@ -73,6 +80,7 @@ enum Expect {
 }
 
 fn check_syntax(str: &str) -> bool {
+
 	let mut p = 0;
 	let mut expect = Expect::Letter;
 	let mut allow_parenthesis = true;
@@ -135,27 +143,65 @@ fn check_syntax(str: &str) -> bool {
 	return true;
 }
 
+fn write_prompt() {
+
+    print!("> ");
+    std::io::stdout().flush().unwrap();
+}
+
 fn main() {
+
+    let mut rules = LinkedList::new();
+
     let re = Regex::new("[[:space:]]").unwrap();
     let stdin = std::io::stdin();
 
-
-    // read lines
-    print!("> ");
-    std::io::stdout().flush().unwrap();
+    write_prompt();
     for line in stdin.lock().lines() {
+
         let s = line.unwrap();
         let rule = re.replace_all(&s, "").to_string();
 
-		if ! check_syntax(rule.as_str()) {
-			println!("syntax_error");
-			continue;
-		}
+        match &rule[..1] {
+            "=" => {
+                let vars = &rule[1..];
 
-        new_rule(rule);
+                for i in 0..vars.len() {
 
-        print!("> ");
-        std::io::stdout().flush().unwrap();
+                    let mut variables = VariableMap.lock().unwrap();
+
+                    let var_name = &vars[i..i+1];
+
+                    if let Some(var_ref) = variables.get_mut(var_name) {
+
+                        *var_ref = VariableState::True;
+                    }
+                    else {
+
+                        println!("Invalid Variable: {}", var_name);
+                    }
+                }
+
+            },
+            "?" => {
+
+            },
+            _ => {
+
+                if !check_syntax(rule.as_str()) {
+
+                    println!("syntax error");
+                }
+                else {
+
+                    let tree = new_rule(rule.as_str());
+
+                    rules.push_back(tree);
+                }
+            }
+        }
+
+        write_prompt();
     }
 }
 

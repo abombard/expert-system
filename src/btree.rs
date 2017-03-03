@@ -2,7 +2,7 @@ use std::collections::LinkedList;
 use std::cmp::Ordering;
 
 use variables;
-use variables::{ VariableState };
+use variables::{ VariableMap, VariableState };
 
 struct BTreeNode {
     v: u8,
@@ -56,72 +56,124 @@ impl BTreeNode {
         !self.is_leaf()
     }
 
-    pub fn display(&self, prev_token: &String, prev_neg: bool) {
+    pub fn to_string(&self, prev_token: &String, prev_neg: bool) -> String {
+
+        let mut s = String::new();
 
         if self.is_node() {
+
             let left = self.l.as_ref().unwrap();
             let right = self.r.as_ref().unwrap();
 
             if self.t != "=>" && left.is_leaf() && right.is_node() {
-                right.display(&self.t, self.n);
-                left.display(&self.t, self.n);
+                s += &right.to_string(&self.t, self.n);
+                s += &left.to_string(&self.t, self.n);
             }
             else {
-                left.display(&self.t, self.n);
-                right.display(&self.t, self.n);
+                s += &left.to_string(&self.t, self.n);
+                s += &right.to_string(&self.t, self.n);
             }
         }
 
         if *prev_token != self.t || prev_neg != self.n {
-          print!("{}{}", self.t, if self.n { "!" } else { "" });
+
+            let t = self.t.clone() + if self.n { "!" } else { "" };
+
+            s += &t;
         }
+
+        s
     }
 
     fn solve_and(lhs: VariableState, rhs: VariableState) -> VariableState {
         match (lhs, rhs) {
             (VariableState::True, VariableState::True) => VariableState::True,
-            (_, VariableState::False) => VariableState::False,
+
+            (_, VariableState::False) |
             (VariableState::False, _) => VariableState::False,
-            (VariableState::Unsolved, _) => VariableState::Unsolved,
+
+            (VariableState::Unsolved, _) |
             (_, VariableState::Unsolved) => VariableState::Unsolved,
+
             _ => VariableState::Undefined
         }
     }
 
     fn solve_or(lhs: VariableState, rhs: VariableState) -> VariableState {
         match (lhs, rhs) {
-            (VariableState::True, _) => VariableState::True,
+            (VariableState::True, _) |
             (_, VariableState::True) => VariableState::True,
-            (VariableState::Unsolved, _) => VariableState::Unsolved,
+
+            (VariableState::Unsolved, _) |
             (_, VariableState::Unsolved) => VariableState::Unsolved,
-            (VariableState::Undefined, _) => VariableState::Undefined,
+
+            (VariableState::Undefined, _) |
             (_, VariableState::Undefined) => VariableState::Undefined,
+
             _ => VariableState::False
         }
     }
 
     fn solve_xor(lhs: VariableState, rhs: VariableState) -> VariableState {
         match (lhs, rhs) {
+            (VariableState::True, VariableState::False) |
+            (VariableState::False, VariableState::True) => VariableState::True,
+
+            (VariableState::True, VariableState::True) |
+            (VariableState::False, VariableState::False) => VariableState::False,
+
+            (VariableState::Unsolved, _) |
+            (_, VariableState::Unsolved) => VariableState::Unsolved,
+
             _ => VariableState::Undefined
         }
     }
 
-    pub fn solve(&self) -> VariableState {
-        if self.is_leaf() {
-            variables::State[&self.t[..]].clone()
+    fn reverse(v: VariableState) -> VariableState {
+        match v {
+            VariableState::True => VariableState::False,
+            VariableState::False => VariableState::True,
+            _ => v
         }
-        else {
-            let left = self.l.as_ref().unwrap();
-            let right = self.r.as_ref().unwrap();
+    }
 
-            match &self.t[..] {
-                "+" => BTreeNode::solve_and(left.solve(), right.solve()),
-                "|" => BTreeNode::solve_or(left.solve(), right.solve()),
-                "^" => BTreeNode::solve_xor(left.solve(), right.solve()),
-                _ => panic!("Unexpected token {}", self.t)
+    pub fn solve(&self) -> VariableState {
+
+        let mut result = {
+
+            if self.t == "=>" {
+
+                let left = self.l.as_ref().unwrap();
+
+                left.solve()
+            }
+            else if self.is_leaf() {
+
+                let variables = VariableMap.lock().unwrap();
+
+                variables[&self.t[..]].clone()
+            }
+            else {
+
+                let left = self.l.as_ref().unwrap();
+                let right = self.r.as_ref().unwrap();
+
+                match &self.t[..] {
+                    "+" => BTreeNode::solve_and(left.solve(), right.solve()),
+                    "|" => BTreeNode::solve_or(left.solve(), right.solve()),
+                    "^" => BTreeNode::solve_xor(left.solve(), right.solve()),
+                    _ => panic!("Unexpected token {}", self.t)
+                }
+
             }
 
+        };
+
+        if self.n {
+            result = BTreeNode::reverse(result);
         }
+
+        result
     }
 
 }   
@@ -237,17 +289,39 @@ impl BTree {
 		}
 	}
 
-    pub fn display(&self) {
+    pub fn to_string(&self) -> String {
+
         if let Some(root_option) = self.root_list.front() {
 			if let Some(root) = root_option.root.as_ref() {
-				root.display(&"".to_string(), true);
-				println!("");
+
+                let s: String = root.to_string(&"".to_string(), true);
+                
+                return s;
 			}
         }
+
+        "".to_string()
+    }
+
+    pub fn display(&self) {
+        
+        let s = self.to_string();
+        
+        println!("{}", s);
+    }
+
+    //TEMP is it necessary ?
+    fn get_rhs(&self) -> &BTreeNode {
+        
+        let root = self.root_list.front().unwrap().root.as_ref().unwrap();
+
+        root.r.as_ref().unwrap()
     }
 
     pub fn solve(&self) -> VariableState {
+
         let root = self.root_list.front().unwrap().root.as_ref().unwrap();
+
         root.solve()
     }
 }
@@ -285,6 +359,10 @@ fn main() {
 	tree.insert("E");
 */
 
+    let s = tree.to_string();
+
+    println!("{}", s);
+
     tree.display();
-    tree.display();
+
 }
