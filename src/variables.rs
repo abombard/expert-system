@@ -7,7 +7,6 @@ use BTree;
 #[derive(Debug, PartialEq, Clone)]
 pub enum VariableState {
     Undefined,
-    Unsolved,
     True,
     False
 }

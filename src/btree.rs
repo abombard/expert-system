@@ -94,9 +94,6 @@ impl BTreeNode {
             (_, VariableState::False) |
             (VariableState::False, _) => VariableState::False,
 
-            (VariableState::Unsolved, _) |
-            (_, VariableState::Unsolved) => VariableState::Unsolved,
-
             _ => VariableState::Undefined
         }
     }
@@ -106,13 +103,9 @@ impl BTreeNode {
             (VariableState::True, _) |
             (_, VariableState::True) => VariableState::True,
 
-            (VariableState::Unsolved, _) |
-            (_, VariableState::Unsolved) => VariableState::Unsolved,
+            (VariableState::False, VariableState::False) => VariableState::False,
 
-            (VariableState::Undefined, _) |
-            (_, VariableState::Undefined) => VariableState::Undefined,
-
-            _ => VariableState::False
+            _ => VariableState::Undefined
         }
     }
 
@@ -123,9 +116,6 @@ impl BTreeNode {
 
             (VariableState::True, VariableState::True) |
             (VariableState::False, VariableState::False) => VariableState::False,
-
-            (VariableState::Unsolved, _) |
-            (_, VariableState::Unsolved) => VariableState::Unsolved,
 
             _ => VariableState::Undefined
         }
