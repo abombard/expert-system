@@ -11,9 +11,9 @@ pub enum VariableState {
     False
 }
 
-pub struct Variable <'a> {
+pub struct Variable {
     pub state: VariableState,
-    pub rules: LinkedList<&BTree>
+    pub rules: LinkedList<BTree>
 }
 
 lazy_static! {

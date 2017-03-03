@@ -174,6 +174,17 @@ fn main() {
             },
             "?" => {
 
+                let vars = &rule[1..];
+
+                for i in 0..vars.len() {
+
+                    let var_name = &vars[i..i+1];
+                    let var = variables.get_mut(var_name).unwrap();
+                    //HERE
+
+                    var.state = VariableState::True;
+                }
+                
             },
             _ => {
 
@@ -190,7 +201,7 @@ fn main() {
                         let var_name = &letters[i..i+1];
                         let var = variables.get_mut(var_name).unwrap();
 
-                        var.rules.push_back(&rule);
+                        var.rules.push_back(rule.clone());
                     }
 
                 }

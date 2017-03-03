@@ -2,8 +2,9 @@ use std::collections::LinkedList;
 use std::cmp::Ordering;
 
 use variables;
-use variables::{ VariableMap, Variable, VariableState };
+use variables::{ VariableMap, VariableState };
 
+#[derive(Clone)]
 struct BTreeNode {
     v: u8,
     t: String,
@@ -170,12 +171,13 @@ impl BTreeNode {
 
 }   
 
-
+#[derive(Clone)]
 struct SubRoot {
     root: Option<BTreeNode>,
     neg: bool
 }
 
+#[derive(Clone)]
 pub struct BTree {
 	root_list: LinkedList<SubRoot>,
 	neg: bool
@@ -302,11 +304,25 @@ impl BTree {
         println!("{}", s);
     }
 
-    pub fn extract_rhs(&self) -> String {
+    pub fn extract_rhs(&mut self) -> String {
 
-        let root = self.root_list.front().unwrap().root.as_ref().unwrap();
+        let sub_root = self.root_list.pop_front().unwrap();
+        let root = sub_root.root.unwrap();
 
         let rhs = root.r.unwrap();
+
+        self.root_list.push_front(
+            SubRoot {
+                root: Some(BTreeNode {
+                    t: root.t,
+                    v: root.v,
+                    n: root.n,
+                    l: root.l,
+                    r: None
+                }),
+                neg: sub_root.neg
+            }
+        );
 
         rhs.to_string(&rhs.t, rhs.n)
     }
