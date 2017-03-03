@@ -2,7 +2,7 @@ use std::collections::LinkedList;
 use std::cmp::Ordering;
 
 use variables;
-use variables::{ VariableMap, VariableState };
+use variables::{ VariableMap, Variable, VariableState };
 
 struct BTreeNode {
     v: u8,
@@ -66,10 +66,12 @@ impl BTreeNode {
             let right = self.r.as_ref().unwrap();
 
             if self.t != "=>" && left.is_leaf() && right.is_node() {
+
                 s += &right.to_string(&self.t, self.n);
                 s += &left.to_string(&self.t, self.n);
             }
             else {
+
                 s += &left.to_string(&self.t, self.n);
                 s += &right.to_string(&self.t, self.n);
             }
@@ -151,7 +153,7 @@ impl BTreeNode {
 
                 let variables = VariableMap.lock().unwrap();
 
-                variables[&self.t[..]].clone()
+                variables[&self.t[..]].state.clone()
             }
             else {
 
@@ -310,12 +312,13 @@ impl BTree {
         println!("{}", s);
     }
 
-    //TEMP is it necessary ?
-    fn get_rhs(&self) -> &BTreeNode {
-        
+    pub fn extract_rhs(&self) -> String {
+
         let root = self.root_list.front().unwrap().root.as_ref().unwrap();
 
-        root.r.as_ref().unwrap()
+        let rhs = root.r.unwrap();
+
+        rhs.to_string(&rhs.t, rhs.n)
     }
 
     pub fn solve(&self) -> VariableState {
@@ -324,6 +327,8 @@ impl BTree {
 
         root.solve()
     }
+
+ 
 }
 
 fn main() {

@@ -34,7 +34,7 @@ mod btree;
 use btree::BTree;
 
 // create a rule from user's input
-fn new_rule(rule: &str) -> BTree {
+fn new_rule(rule: &str) -> (String, BTree) {
 
     let mut tree = BTree::new();
 
@@ -50,19 +50,14 @@ fn new_rule(rule: &str) -> BTree {
             }
         };
 
-        println!("New token {}", token);
-
         tree.insert(token);
 
         i += token.len();
     }
 
-    tree.display();
+    let letters = tree.extract_rhs();
 
-    let result = tree.solve();
-    println!("Result: {:?}", result);
-
-    tree
+    (letters, tree)
 }
 
 extern crate regex;
@@ -151,7 +146,7 @@ fn write_prompt() {
 
 fn main() {
 
-    let mut rules = LinkedList::new();
+    let mut variables = VariableMap.lock().unwrap();
 
     let re = Regex::new("[[:space:]]").unwrap();
     let stdin = std::io::stdin();
@@ -163,23 +158,17 @@ fn main() {
         let rule = re.replace_all(&s, "").to_string();
 
         match &rule[..1] {
+
             "=" => {
+
                 let vars = &rule[1..];
 
                 for i in 0..vars.len() {
 
-                    let mut variables = VariableMap.lock().unwrap();
-
                     let var_name = &vars[i..i+1];
+                    let var = variables.get_mut(var_name).unwrap();
 
-                    if let Some(var_ref) = variables.get_mut(var_name) {
-
-                        *var_ref = VariableState::True;
-                    }
-                    else {
-
-                        println!("Invalid Variable: {}", var_name);
-                    }
+                    var.state = VariableState::True;
                 }
 
             },
@@ -194,9 +183,16 @@ fn main() {
                 }
                 else {
 
-                    let tree = new_rule(rule.as_str());
+                    let (letters, rule) = new_rule(rule.as_str());
 
-                    rules.push_back(tree);
+                    for i in 0..letters.len() {
+
+                        let var_name = &letters[i..i+1];
+                        let var = variables.get_mut(var_name).unwrap();
+
+                        var.rules.push_back(&rule);
+                    }
+
                 }
             }
         }
