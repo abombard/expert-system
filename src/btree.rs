@@ -5,10 +5,10 @@ use variables;
 use variables::{ VariableMap, VariableState };
 
 #[derive(Clone)]
-struct BTreeNode {
+pub struct BTreeNode {
     v: u8,
     t: String,
-    n: bool,
+    pub n: bool,
     l: Option<Box<BTreeNode>>,
     r: Option<Box<BTreeNode>>
 }
@@ -172,22 +172,24 @@ impl BTreeNode {
 }   
 
 #[derive(Clone)]
-struct SubRoot {
-    root: Option<BTreeNode>,
+pub struct SubRoot {
+    pub root: Option<BTreeNode>,
     neg: bool
 }
 
 #[derive(Clone)]
 pub struct BTree {
-	root_list: LinkedList<SubRoot>,
-	neg: bool
+	pub root_list: LinkedList<SubRoot>,
+	neg: bool,
+	pub state: VariableState
 }
 
 impl BTree {
 	pub fn new() -> BTree {
 		BTree {
 		    root_list: LinkedList::new(),
-		    neg: false
+			neg: false,
+			state: VariableState::Undefined
 		}
 	}
 

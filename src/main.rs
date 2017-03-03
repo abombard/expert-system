@@ -27,8 +27,11 @@ fn lexer(s: &str) -> Option<&str> {
 #[macro_use]
 extern crate lazy_static;
 
+use std::collections::HashMap;
+use std::sync::Mutex;
+
 mod variables;
-use variables::{ VariableMap, VariableState };
+use variables::{ VariableMap, VariableState, Variable };
 
 mod btree;
 use btree::BTree;
@@ -55,7 +58,7 @@ fn new_rule(rule: &str) -> (String, BTree) {
         i += token.len();
     }
 
-    let letters = tree.extract_rhs();
+    let letters = tree.extract_rhs().replace("+", "");
 
     (letters, tree)
 }
@@ -144,9 +147,42 @@ fn write_prompt() {
     std::io::stdout().flush().unwrap();
 }
 
-fn main() {
+fn solve_query(vars: String) -> bool {
+	let mut variables = VariableMap.lock().unwrap();
+	'toto: loop {
+		for i in 0..vars.len() {
+			let var_name = &vars[i..i+1];
+			let var = variables.get_mut(var_name).unwrap();
+			let mut reboot = false;
 
-    let mut variables = VariableMap.lock().unwrap();
+			println!("ping");
+			for ref mut rule in &mut var.rules {
+println!("pong");
+				let mut prev_state = rule.state.clone();
+				println!("{:?}", prev_state);
+				if rule.state == VariableState::Undefined {
+					rule.state = rule.solve();
+					if rule.state != VariableState::Undefined {
+						if rule.state != var.state && var.state != VariableState::Undefined {
+							return false;
+						}
+						var.state = rule.state.clone();
+						if prev_state != rule.state {
+							reboot = true;
+						}
+					}
+				}
+			}
+			if reboot == true {
+					continue 'toto;
+			}
+		}
+		break;
+	}
+	return true;
+}
+
+fn main() {
 
     let re = Regex::new("[[:space:]]").unwrap();
     let stdin = std::io::stdin();
@@ -164,7 +200,7 @@ fn main() {
                 let vars = &rule[1..];
 
                 for i in 0..vars.len() {
-
+					let mut variables = VariableMap.lock().unwrap();
                     let var_name = &vars[i..i+1];
                     let var = variables.get_mut(var_name).unwrap();
 
@@ -177,14 +213,24 @@ fn main() {
                 let vars = &rule[1..];
 
                 for i in 0..vars.len() {
-
+					let mut variables = VariableMap.lock().unwrap();
                     let var_name = &vars[i..i+1];
                     let var = variables.get_mut(var_name).unwrap();
-                    //HERE
-
-                    var.state = VariableState::True;
+					
+					var.state = VariableState::Undefined;
                 }
-                
+
+				if ! solve_query(vars.to_string()) {
+					println!("contradiction");
+				}
+				
+				for i in 0..vars.len() {
+					let mut variables = VariableMap.lock().unwrap();
+					let var_name = &vars[i..i+1];
+					let var = variables.get_mut(var_name).unwrap();
+
+					println!("{} is {:?}", var_name, var.state);
+				}
             },
             _ => {
 
@@ -197,11 +243,20 @@ fn main() {
                     let (letters, rule) = new_rule(rule.as_str());
 
                     for i in 0..letters.len() {
-
+						let mut variables = VariableMap.lock().unwrap();
                         let var_name = &letters[i..i+1];
                         let var = variables.get_mut(var_name).unwrap();
+						rule.display();
+let mut var_rule = rule.clone();
+						var_rule.display();
+						if &letters[i+1..i+2] == "!" {
+								let mut root_ref = var_rule.root_list.front_mut().unwrap();
+								if let Some(ref mut root) = root_ref.root {
+									root.n = true;
+								}
+						}
 
-                        var.rules.push_back(rule.clone());
+                        var.rules.push_back(var_rule);
                     }
 
                 }
