@@ -309,19 +309,14 @@ impl BTree {
     pub fn extract_rhs(&mut self) -> String {
 
         let sub_root = self.root_list.pop_front().unwrap();
-        let root = sub_root.root.unwrap();
+        let mut root = sub_root.root.unwrap();
 
         let rhs = root.r.unwrap();
 
+		root.r = None;
         self.root_list.push_front(
             SubRoot {
-                root: Some(BTreeNode {
-                    t: root.t,
-                    v: root.v,
-                    n: root.n,
-                    l: root.l,
-                    r: None
-                }),
+                root: Some(root),
                 neg: sub_root.neg
             }
         );
