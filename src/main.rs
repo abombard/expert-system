@@ -162,13 +162,18 @@ fn main() {
                     let (letters, rule) = syntax::lexer_parser(rule.as_str());
 
                     for i in 0..letters.len() {
-						let mut variables = VARIABLEMAP.lock().unwrap();
                         let var_name = &letters[i..i+1];
+
+                        if !var_name.chars().next().unwrap().is_uppercase() {
+                            continue ;
+                        }
+
+						let mut variables = VARIABLEMAP.lock().unwrap();
                         let var = variables.get_mut(var_name).unwrap();
 
                         let mut var_rule = rule.clone();
 
-						if i + 2 < letters.len() && &letters[i+2..i+2] == "!" {
+						if i + 2 < letters.len() && &letters[i+1..i+2] == "!" {
 
                             if let Some(ref mut root) = var_rule.root {
 
