@@ -27,11 +27,8 @@ fn lexer(s: &str) -> Option<&str> {
 #[macro_use]
 extern crate lazy_static;
 
-use std::collections::HashMap;
-use std::sync::Mutex;
-
 mod variables;
-use variables::{ VariableMap, VariableState, Variable };
+use variables::{ VariableMap, VariableState };
 
 mod btree;
 use btree::BTree;
@@ -58,7 +55,9 @@ fn new_rule(rule: &str) -> (String, BTree) {
         i += token.len();
     }
 
-    let letters = tree.extract_rhs().replace("+", "");
+    tree.close();
+
+    let letters = tree.get_rhs().to_string().replace("+", "");
 
     (letters, tree)
 }
@@ -68,7 +67,6 @@ extern crate regex;
 use std::io::BufRead; /* stdin().lock() */
 use std::io::Write;   /* stdout().flush() */
 use regex::Regex;
-use std::collections::LinkedList;
 
 #[derive(PartialEq)]
 enum Expect {
@@ -148,37 +146,62 @@ fn write_prompt() {
 }
 
 fn solve_query(vars: String) -> bool {
-	let mut variables = VariableMap.lock().unwrap();
-	'toto: loop {
-		for i in 0..vars.len() {
-			let var_name = &vars[i..i+1];
-			let var = variables.get_mut(var_name).unwrap();
-			let mut reboot = false;
 
-			println!("ping");
+	'solve: loop {
+
+		for i in 0..vars.len() {
+
+			let var_name = &vars[i..i+1];
+			let mut var = {
+                let mut variables = VariableMap.lock().unwrap();
+
+                variables.get_mut(var_name).unwrap().clone()
+            };
+
+            let mut state = VariableState::Undefined;
+
 			for ref mut rule in &mut var.rules {
-println!("pong");
-				let mut prev_state = rule.state.clone();
-				println!("{:?}", prev_state);
-				if rule.state == VariableState::Undefined {
-					rule.state = rule.solve();
-					if rule.state != VariableState::Undefined {
-						if rule.state != var.state && var.state != VariableState::Undefined {
-							return false;
-						}
-						var.state = rule.state.clone();
-						if prev_state != rule.state {
-							reboot = true;
-						}
-					}
-				}
+
+				if rule.state != VariableState::Undefined {
+
+                    state = rule.state.clone();
+                    continue ;
+                }
+
+                rule.state = rule.solve();
+                if rule.state == VariableState::Undefined {
+
+                    continue ;
+                }
+
+                if state == VariableState::Undefined {
+
+                    state = rule.state.clone();
+                }
+                else if state != rule.state {
+
+                    println!("Error {:?} != {:?}", state, rule.state);
+                    return false;
+                }
 			}
-			if reboot == true {
-					continue 'toto;
-			}
+
+            {
+                let mut variables = VariableMap.lock().unwrap();
+
+                let var = variables.get_mut(var_name).unwrap();
+
+                if var.state != state {
+
+                    var.state = state;
+                    continue 'solve;
+                }
+            }
 		}
+
 		break;
 	}
+
+    println!("Return true");
 	return true;
 }
 
@@ -246,14 +269,15 @@ fn main() {
 						let mut variables = VariableMap.lock().unwrap();
                         let var_name = &letters[i..i+1];
                         let var = variables.get_mut(var_name).unwrap();
-						rule.display();
-let mut var_rule = rule.clone();
-						var_rule.display();
-						if &letters[i+1..i+2] == "!" {
-								let mut root_ref = var_rule.root_list.front_mut().unwrap();
-								if let Some(ref mut root) = root_ref.root {
-									root.n = true;
-								}
+
+                        let mut var_rule = rule.clone();
+
+						if i + 2 < letters.len() && &letters[i+2..i+2] == "!" {
+
+                            if let Some(ref mut root) = var_rule.root {
+
+                                root.n = true;
+                            }
 						}
 
                         var.rules.push_back(var_rule);

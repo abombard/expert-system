@@ -1,7 +1,6 @@
 use std::collections::LinkedList;
 use std::cmp::Ordering;
 
-use variables;
 use variables::{ VariableMap, VariableState };
 
 #[derive(Clone)]
@@ -179,17 +178,19 @@ pub struct SubRoot {
 
 #[derive(Clone)]
 pub struct BTree {
-	pub root_list: LinkedList<SubRoot>,
+    pub root: Option<BTreeNode>,
+	pub state: VariableState,
+	root_list: LinkedList<SubRoot>,
 	neg: bool,
-	pub state: VariableState
 }
 
 impl BTree {
 	pub fn new() -> BTree {
 		BTree {
+            root: None,
+			state: VariableState::Undefined,
 		    root_list: LinkedList::new(),
 			neg: false,
-			state: VariableState::Undefined
 		}
 	}
 
@@ -285,18 +286,24 @@ impl BTree {
 		}
 	}
 
+    pub fn close(&mut self) {
+
+        assert!(self.root_list.len() == 1, "Error building the tree, root_list.len: {}", self.root_list.len());
+
+        let subroot = self.root_list.pop_front().unwrap();
+
+        assert!(subroot.root.is_some(), "Error building the tree, subroot.root is None");
+
+        self.root = subroot.root;
+    }
+
     pub fn to_string(&self) -> String {
 
-        if let Some(root_option) = self.root_list.front() {
-			if let Some(root) = root_option.root.as_ref() {
+        match self.root {
 
-                let s: String = root.to_string(&"".to_string(), true);
-                
-                return s;
-			}
+            Some(ref root) => root.to_string(&"".to_string(), true),
+            None => "".to_string()
         }
-
-        "".to_string()
     }
 
     pub fn display(&self) {
@@ -306,27 +313,20 @@ impl BTree {
         println!("{}", s);
     }
 
-    pub fn extract_rhs(&mut self) -> String {
+    pub fn get_rhs(&mut self) -> BTree {
 
-        let sub_root = self.root_list.pop_front().unwrap();
-        let mut root = sub_root.root.unwrap();
+        let root = self.root.as_ref().unwrap();
 
-        let rhs = root.r.unwrap();
+        let mut rhs = BTree::new();
 
-		root.r = None;
-        self.root_list.push_front(
-            SubRoot {
-                root: Some(root),
-                neg: sub_root.neg
-            }
-        );
+        rhs.root = Some(*root.r.clone().unwrap());
 
-        rhs.to_string(&rhs.t, rhs.n)
+        rhs
     }
 
     pub fn solve(&self) -> VariableState {
 
-        let root = self.root_list.front().unwrap().root.as_ref().unwrap();
+        let root = self.root.as_ref().unwrap();
 
         root.solve()
     }

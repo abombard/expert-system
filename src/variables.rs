@@ -11,6 +11,7 @@ pub enum VariableState {
     False
 }
 
+#[derive(Clone)]
 pub struct Variable {
     pub state: VariableState,
     pub rules: LinkedList<BTree>
