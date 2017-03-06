@@ -1,29 +1,3 @@
-/*
-** lexer
-*/
-fn lexer(s: &str) -> Option<&str> {
-
-    if s.len() >= 2 {
-        let ok = match &s[..2] {
-            "=>" => true,
-            _    => false
-        };
-        if ok {
-            return Some(&s[..2]);
-        }
-    }
-
-    let ok = match &s[..1] {
-        "+" | "|" | "^" | "(" | ")" | "=" | "?" | "!" => true,
-        _ => s.chars().next().unwrap().is_uppercase()
-    };
-    if ok {
-        return Some(&s[..1]);
-    }
-
-    return None;
-}
-
 #[macro_use]
 extern crate lazy_static;
 
@@ -33,111 +7,13 @@ use variables::{ VariableMap, VariableState };
 mod btree;
 use btree::BTree;
 
-// create a rule from user's input
-fn new_rule(rule: &str) -> (String, BTree) {
-
-    let mut tree = BTree::new();
-
-    let mut i = 0;
-    while i < rule.len() {
-
-        let token = match lexer(&rule[i..]) {
-
-            Some(token) => token,
-            None => {
-                println!("Invalid token: '{}'", &rule[i..]);
-                break ;
-            }
-        };
-
-        tree.insert(token);
-
-        i += token.len();
-    }
-
-    tree.close();
-
-    let letters = tree.get_rhs().to_string().replace("+", "");
-
-    (letters, tree)
-}
+mod syntax;
 
 extern crate regex;
 
 use std::io::BufRead; /* stdin().lock() */
 use std::io::Write;   /* stdout().flush() */
 use regex::Regex;
-
-#[derive(PartialEq)]
-enum Expect {
-	Letter,
-	Operator,
-	Greater
-}
-
-fn check_syntax(str: &str) -> bool {
-
-	let mut p = 0;
-	let mut expect = Expect::Letter;
-	let mut allow_parenthesis = true;
-
-	for c in str.chars() {
-		match c {
-			'=' => {
-				if expect != Expect::Operator || allow_parenthesis == false || p != 0 {
-					return false;
-				}
-				expect = Expect::Greater;
-			},
-			'>' => {
-				if expect != Expect::Greater {
-					return false;
-				}
-				expect = Expect::Letter;
-				allow_parenthesis = false;
-			},
-			'(' => {
-				if expect != Expect::Letter || allow_parenthesis == false {
-					return false;
-				}
-				p += 1;
-			},
-			')' => {
-				if expect != Expect::Operator || allow_parenthesis == false || p == 0 {
-					return false;
-				}
-				p -= 1;
-			},
-			'!' => {
-				if expect != Expect::Letter {
-					return false;
-				}
-			},
-			'+' | '|' | '^' => {
-				if expect != Expect::Operator {
-					return false;
-				}
-				expect = Expect::Letter;
-			},
-			_ => {
-				if c.is_uppercase() {
-					if expect != Expect::Letter {
-						return false;
-					}
-					expect = Expect::Operator;
-				}
-				else {
-					return false;
-				}
-			}
-		};
-	}
-	if expect != Expect::Operator || allow_parenthesis == true {
-		return false;
-	}
-
-	return true;
-}
 
 fn write_prompt() {
 
@@ -201,7 +77,6 @@ fn solve_query(vars: String) -> bool {
 		break;
 	}
 
-    println!("Return true");
 	return true;
 }
 
@@ -222,12 +97,19 @@ fn main() {
 
                 let vars = &rule[1..];
 
-                for i in 0..vars.len() {
-					let mut variables = VariableMap.lock().unwrap();
-                    let var_name = &vars[i..i+1];
-                    let var = variables.get_mut(var_name).unwrap();
+                if !syntax::variables(&vars) {
 
-                    var.state = VariableState::True;
+                    println!("syntax error");
+                }
+                else {
+
+                    for i in 0..vars.len() {
+                        let mut variables = VariableMap.lock().unwrap();
+                        let var_name = &vars[i..i+1];
+                        let var = variables.get_mut(var_name).unwrap();
+
+                        var.state = VariableState::True;
+                    }
                 }
 
             },
@@ -235,35 +117,42 @@ fn main() {
 
                 let vars = &rule[1..];
 
-                for i in 0..vars.len() {
-					let mut variables = VariableMap.lock().unwrap();
-                    let var_name = &vars[i..i+1];
-                    let var = variables.get_mut(var_name).unwrap();
-					
-					var.state = VariableState::Undefined;
-                }
-
-				if ! solve_query(vars.to_string()) {
-					println!("contradiction");
-				}
-				
-				for i in 0..vars.len() {
-					let mut variables = VariableMap.lock().unwrap();
-					let var_name = &vars[i..i+1];
-					let var = variables.get_mut(var_name).unwrap();
-
-					println!("{} is {:?}", var_name, var.state);
-				}
-            },
-            _ => {
-
-                if !check_syntax(rule.as_str()) {
+                if !syntax::variables(&vars) {
 
                     println!("syntax error");
                 }
                 else {
 
-                    let (letters, rule) = new_rule(rule.as_str());
+                    for i in 0..vars.len() {
+                        let mut variables = VariableMap.lock().unwrap();
+                        let var_name = &vars[i..i+1];
+                        let var = variables.get_mut(var_name).unwrap();
+                        
+                        var.state = VariableState::Undefined;
+                    }
+
+                    if ! solve_query(vars.to_string()) {
+                        println!("contradiction");
+                    }
+                    
+                    for i in 0..vars.len() {
+                        let mut variables = VariableMap.lock().unwrap();
+                        let var_name = &vars[i..i+1];
+                        let var = variables.get_mut(var_name).unwrap();
+
+                        println!("{} is {:?}", var_name, var.state);
+                    }
+                }
+            },
+            _ => {
+
+                if !syntax::rule(rule.as_str()) {
+
+                    println!("syntax error");
+                }
+                else {
+
+                    let (letters, rule) = syntax::lexer_parser(rule.as_str());
 
                     for i in 0..letters.len() {
 						let mut variables = VariableMap.lock().unwrap();
