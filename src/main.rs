@@ -46,6 +46,7 @@ fn solve_query(vars: String) -> bool {
                 }
 
                 rule.state = rule.solve();
+
                 if rule.state == VariableState::Undefined {
 
                     continue ;
@@ -179,7 +180,7 @@ fn main() {
 
                         let mut var_rule = rule.clone();
 
-						if i + 2 < letters.len() && &letters[i+1..i+2] == "!" {
+						if i + 1 < letters.len() && &letters[i+1..i+2] == "!" {
 
                             if let Some(ref mut root) = var_rule.root {
 

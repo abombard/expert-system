@@ -161,6 +161,10 @@ impl BTreeNode {
 
         };
 
+		if self.t == "=>" && result == VariableState::False {
+			result = VariableState::Undefined;
+		}
+
         if self.n {
             result = BTreeNode::reverse(result);
         }
