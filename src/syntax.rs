@@ -9,6 +9,7 @@ pub fn rule(str: &str) -> bool {
 
 	let mut p = 0;
 	let mut expect = Expect::Letter;
+	let mut operator = '$';
 	let mut allow_parenthesis = true;
 
 	for c in str.chars() {
@@ -46,6 +47,14 @@ pub fn rule(str: &str) -> bool {
 			'+' | '|' | '^' => {
 				if expect != Expect::Operator {
 					return false;
+				}
+				if allow_parenthesis == false {
+					if operator == '$' {
+						operator = c;
+					}
+					else if operator != c {
+						return false;
+					}
 				}
 				expect = Expect::Letter;
 			},
