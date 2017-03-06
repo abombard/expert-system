@@ -98,6 +98,12 @@ fn main() {
         let s = line.unwrap();
         let rule = re.replace_all(&s, "").to_string();
 
+        if rule.len() == 0 {
+
+            write_prompt();
+            continue ;
+        }
+
         match &rule[..1] {
 
             "=" => {
