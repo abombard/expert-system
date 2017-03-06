@@ -28,19 +28,20 @@ fn solve_query(vars: String) -> bool {
 		for i in 0..vars.len() {
 
 			let var_name = &vars[i..i+1];
-			let mut var = {
+			let mut var_tmp = {
                 let mut variables = VARIABLEMAP.lock().unwrap();
 
                 variables.get_mut(var_name).unwrap().clone()
             };
+            let mut restart = false;
 
-            let mut state = VariableState::Undefined;
+            var_tmp.state = VariableState::Undefined;
 
-			for ref mut rule in &mut var.rules {
+			for ref mut rule in &mut var_tmp.rules {
 
 				if rule.state != VariableState::Undefined {
 
-                    state = rule.state.clone();
+                    var_tmp.state = rule.state.clone();
                     continue ;
                 }
 
@@ -50,13 +51,14 @@ fn solve_query(vars: String) -> bool {
                     continue ;
                 }
 
-                if state == VariableState::Undefined {
+                rule.display();
+                if var_tmp.state == VariableState::Undefined {
 
-                    state = rule.state.clone();
+                    var_tmp.state = rule.state.clone();
                 }
-                else if state != rule.state {
+                else if var_tmp.state != rule.state {
 
-                    println!("Error {:?} != {:?}", state, rule.state);
+                    println!("Error {:?} != {:?}", var_tmp.state, rule.state);
                     return false;
                 }
 			}
@@ -66,11 +68,16 @@ fn solve_query(vars: String) -> bool {
 
                 let var = variables.get_mut(var_name).unwrap();
 
-                if var.state != state {
+                if var.state != var_tmp.state {
 
-                    var.state = state;
-                    continue 'solve;
+                    restart = true;
                 }
+                *var = var_tmp;
+            }
+
+            if restart {
+
+                continue 'solve;
             }
 		}
 
