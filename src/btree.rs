@@ -1,7 +1,7 @@
 use std::collections::LinkedList;
 use std::cmp::Ordering;
 
-use variables::{ VariableMap, VariableState };
+use variables::{ VARIABLEMAP, VariableState };
 
 #[derive(Clone)]
 pub struct BTreeNode {
@@ -141,7 +141,7 @@ impl BTreeNode {
             }
             else if self.is_leaf() {
 
-                let variables = VariableMap.lock().unwrap();
+                let variables = VARIABLEMAP.lock().unwrap();
 
                 variables[&self.t[..]].state.clone()
             }

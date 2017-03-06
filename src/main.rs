@@ -2,7 +2,7 @@
 extern crate lazy_static;
 
 mod variables;
-use variables::{ VariableMap, VariableState };
+use variables::{ VARIABLEMAP, VariableState };
 
 mod btree;
 use btree::BTree;
@@ -29,7 +29,7 @@ fn solve_query(vars: String) -> bool {
 
 			let var_name = &vars[i..i+1];
 			let mut var = {
-                let mut variables = VariableMap.lock().unwrap();
+                let mut variables = VARIABLEMAP.lock().unwrap();
 
                 variables.get_mut(var_name).unwrap().clone()
             };
@@ -62,7 +62,7 @@ fn solve_query(vars: String) -> bool {
 			}
 
             {
-                let mut variables = VariableMap.lock().unwrap();
+                let mut variables = VARIABLEMAP.lock().unwrap();
 
                 let var = variables.get_mut(var_name).unwrap();
 
@@ -104,7 +104,7 @@ fn main() {
                 else {
 
                     for i in 0..vars.len() {
-                        let mut variables = VariableMap.lock().unwrap();
+                        let mut variables = VARIABLEMAP.lock().unwrap();
                         let var_name = &vars[i..i+1];
                         let var = variables.get_mut(var_name).unwrap();
 
@@ -124,7 +124,7 @@ fn main() {
                 else {
 
                     for i in 0..vars.len() {
-                        let mut variables = VariableMap.lock().unwrap();
+                        let mut variables = VARIABLEMAP.lock().unwrap();
                         let var_name = &vars[i..i+1];
                         let var = variables.get_mut(var_name).unwrap();
                         
@@ -136,7 +136,7 @@ fn main() {
                     }
                     
                     for i in 0..vars.len() {
-                        let mut variables = VariableMap.lock().unwrap();
+                        let mut variables = VARIABLEMAP.lock().unwrap();
                         let var_name = &vars[i..i+1];
                         let var = variables.get_mut(var_name).unwrap();
 
@@ -155,7 +155,7 @@ fn main() {
                     let (letters, rule) = syntax::lexer_parser(rule.as_str());
 
                     for i in 0..letters.len() {
-						let mut variables = VariableMap.lock().unwrap();
+						let mut variables = VARIABLEMAP.lock().unwrap();
                         let var_name = &letters[i..i+1];
                         let var = variables.get_mut(var_name).unwrap();
 

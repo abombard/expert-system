@@ -18,7 +18,7 @@ pub struct Variable {
 }
 
 lazy_static! {
-    pub static ref VariableMap: Mutex<HashMap<&'static str, Variable>> = {
+    pub static ref VARIABLEMAP: Mutex<HashMap<&'static str, Variable>> = {
 
         let mut map = HashMap::new();
 
