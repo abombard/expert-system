@@ -17,38 +17,36 @@ pub struct Variable {
     pub rules: LinkedList<BTree>
 }
 
+pub const VARS: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
 lazy_static! {
     pub static ref VARIABLEMAP: Mutex<HashMap<&'static str, Variable>> = {
 
         let mut map = HashMap::new();
 
-        map.insert("A", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("B", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("C", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("D", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("E", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("F", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("G", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("I", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("J", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("K", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("L", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("M", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("N", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("O", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("P", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("Q", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("R", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("S", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("T", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("U", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("V", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("W", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("X", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("Y", Variable { state: VariableState::False, rules: LinkedList::new() });
-        map.insert("Z", Variable { state: VariableState::False, rules: LinkedList::new() });
+        for i in 0..VARS.len() {
+
+            let var = &VARS[i..i+1];
+
+            map.insert(var, Variable { state: VariableState::False, rules: LinkedList::new() });
+        }
 
         Mutex::new(map)
     };
+}
+
+pub fn reset() {
+
+    let mut variables = VARIABLEMAP.lock().unwrap();
+
+    for i in 0..VARS.len() {
+
+        let var = variables.get_mut(&VARS[i..i+1]).unwrap();
+
+        for ref mut rule in &mut var.rules {
+
+            rule.state = VariableState::Undefined;
+        }
+    }
 }
 

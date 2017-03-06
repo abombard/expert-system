@@ -23,6 +23,8 @@ fn write_prompt() {
 
 fn solve_query(vars: String) -> bool {
 
+    variables::reset();
+
 	'solve: loop {
 
 		for i in 0..vars.len() {
