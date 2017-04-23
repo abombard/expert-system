@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::collections::LinkedList;
 use std::sync::Mutex;
 
-use BTree;
+use btree::BTree;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum VariableState {

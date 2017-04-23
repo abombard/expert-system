@@ -114,7 +114,7 @@ pub fn lexer(s: &str) -> Option<&str> {
     return None;
 }
 
-use BTree;
+use btree::BTree;
 
 pub fn lexer_parser(rule: &str) -> (String, BTree) {
 
