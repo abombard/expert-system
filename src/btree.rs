@@ -81,7 +81,7 @@ impl BTreeNode {
 
         if *prev_token != self.t || prev_neg != self.n {
 
-            let t = self.t.clone() + if self.n { "!" } else { "" };
+            let t = self.t.clone() + if self.n && &self.t != "=>" { "!" } else { "" };
 
             s += &t;
         }
