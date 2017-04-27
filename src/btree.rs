@@ -193,7 +193,7 @@ impl BTreeNode {
 
         };
 
-        if self.n {
+        if self.n && &self.t[..] != "=>" {
             result = match result {
                 MyOption::Some(state) => MyOption::Some(BTreeNode::reverse(state)),
                 _ => result
