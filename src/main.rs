@@ -32,7 +32,7 @@ fn write_prompt() {
 
 fn solve_all(vars: String) -> bool {
 
-    let mut success = true;
+    let success = true;
     
     's: loop {
         for i in 0..variables::VARS.len() {

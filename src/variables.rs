@@ -20,7 +20,7 @@ pub struct Variable {
 }
 
 impl Variable {
-    pub fn solve(&self, mut closed: String) -> MyOption<VariableState> {
+    pub fn solve(&self, closed: String) -> MyOption<VariableState> {
         let mut s = String::new();
         let mut state = VariableState::Undefined;
         for ref rule in &self.rules {

@@ -151,7 +151,17 @@ impl BTreeNode {
                     if closed.contains(&self.t[..]) {
                         MyOption::Error("Inconsistant state leading to infinite loop".to_string())
                     } else {
-                        var.solve(closed + &self.t[..])
+                        match var.solve(closed + &self.t[..]) {
+                            MyOption::Some(state) => {
+                                MyOption::Some(
+                                    match state {
+                                        VariableState::Undefined => VariableState::False,
+                                        _ => state
+                                    }
+                                )
+                            },
+                            err => err
+                        }
                     }
                 } else {
                     MyOption::Some(var.state.clone())
