@@ -1,6 +1,13 @@
 #[macro_use]
 extern crate lazy_static;
 
+use std::env;
+
+use std::error::Error;
+
+use std::io::BufReader;
+use std::fs::File;
+
 mod variables;
 use variables::{ VARIABLEMAP, VariableState };
 
@@ -178,6 +185,30 @@ fn main() {
 
     let re = Regex::new("[[:space:]]").unwrap();
     let stdin = std::io::stdin();
+    let args: Vec<String> = env::args().collect();
+
+    if (args.len() != 2) {
+        panic!("Invalid number of arguments");
+    }
+
+    let file = match File::open(&args[1]) {
+        Err(why) => panic!("couldn't open {}: {}", args[1], why.description()),
+        Ok(file) => file,
+    };
+
+    let file_content = BufReader::new(&file);
+
+    for line in file_content.lines() {
+        let s = line.unwrap();
+        let rule = re.replace_all(&s, "").to_string();
+
+        if rule.len() == 0 {
+            write_prompt();
+            continue ;
+        }
+
+        handle_new_line(rule);
+    }
 
     write_prompt();
     for line in stdin.lock().lines() {
@@ -196,4 +227,3 @@ fn main() {
         write_prompt();
     }
 }
-
