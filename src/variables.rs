@@ -26,10 +26,7 @@ impl Variable {
         for ref rule in &self.rules {
             let rule_state = {
                 match rule.solve(closed.clone()) {
-                    MyOption::Some(state) => match state {
-                        VariableState::True => VariableState::True,
-                        _ => VariableState::False
-                    },
+                    MyOption::Some(state) => state,
                     MyOption::Error(s) => return MyOption::Error(s)
                 }
             };
@@ -42,7 +39,9 @@ impl Variable {
             s.push_str(&rule.to_string());
             s.push_str(&"\n".to_string());
         }
-        print!("{}", s);
+        if state != VariableState::Undefined {
+            print!("{}", s);
+        }
         MyOption::Some(state)
     }
 }

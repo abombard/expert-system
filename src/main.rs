@@ -119,7 +119,7 @@ fn handle_new_line(line: String) {
 
             if !syntax::variables(&vars) {
 
-                println!("syntax error");
+                println!("syntax error: {}", line);
             }
             else {
 
@@ -137,14 +137,14 @@ fn handle_new_line(line: String) {
 
             let vars = &line[1..];
 
-            if ! syntax::variables(&vars) { println!("syntax error"); }
+            if ! syntax::variables(&vars) { println!("syntax error: {}", line); }
             else { solve_query(vars.to_string()); }
         },
         _ => {
 
             if !syntax::rule(line.as_str()) {
 
-                println!("syntax error");
+                println!("syntax error: {}", line);
             }
             else {
 
