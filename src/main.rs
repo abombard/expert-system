@@ -21,7 +21,9 @@ fn write_prompt() {
     std::io::stdout().flush().unwrap();
 }
 
-fn solve_all() {
+fn solve_all() -> bool {
+
+    let mut success = true;
     
     's: loop {
         for i in 0..variables::VARS.len() {
@@ -40,6 +42,7 @@ fn solve_all() {
                     else if state != rule.state {
                         println!("Error {:?} != {:?}", state, rule.state);
                         state = VariableState::Undefined;
+                        success = false
                     }
                 }
 
@@ -57,6 +60,8 @@ fn solve_all() {
         }
         break ;
     }
+
+    success
 }
 
 fn solve_query(vars: String) -> bool {
@@ -177,18 +182,18 @@ fn handle_new_line(line: String) {
                     println!("contradiction");
                 }
                 */
-                solve_all();
+                if solve_all() {
+                    for i in 0..vars.len() {
+                        let mut variables = VARIABLEMAP.lock().unwrap();
+                        let var_name = &vars[i..i+1];
+                        let var = variables.get_mut(var_name).unwrap();
 
-                for i in 0..vars.len() {
-                    let mut variables = VARIABLEMAP.lock().unwrap();
-                    let var_name = &vars[i..i+1];
-                    let var = variables.get_mut(var_name).unwrap();
-
-                    if var.state == VariableState::Undefined {
-                        println!("{} is false", var_name);
-                    }
-                    else {
-                        println!("{} is {:?}", var_name, var.state);
+                        if var.state == VariableState::Undefined {
+                            println!("{} is false", var_name);
+                        }
+                        else {
+                            println!("{} is {:?}", var_name, var.state);
+                        }
                     }
                 }
             }
