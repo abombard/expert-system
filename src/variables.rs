@@ -17,6 +17,31 @@ pub struct Variable {
     pub rules: LinkedList<BTree>
 }
 
+impl Variable {
+    pub fn solve(&self) -> VariableState {
+        let mut s = String::new();
+        let mut state = VariableState::Undefined;
+        for ref rule in &self.rules {
+            let rule_state = {
+                match rule.solve() {
+                    VariableState::True => VariableState::True,
+                    _ => VariableState::False
+                }
+            };
+            if state == VariableState::Undefined {
+                state = rule_state.clone();
+            }
+            else if state != rule_state {
+                return VariableState::Undefined;
+            }
+            s.push_str(&rule.to_string());
+            s.push_str(&"\n".to_string());
+        }
+        print!("{}", s);
+        state
+    }
+}
+
 pub const VARS: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 lazy_static! {
@@ -28,7 +53,7 @@ lazy_static! {
 
             let var = &VARS[i..i+1];
 
-            map.insert(var, Variable { state: VariableState::False, rules: LinkedList::new() });
+            map.insert(var, Variable { state: VariableState::Undefined, rules: LinkedList::new() });
         }
 
         Mutex::new(map)

@@ -21,7 +21,7 @@ fn write_prompt() {
     std::io::stdout().flush().unwrap();
 }
 
-fn solve_all() -> bool {
+fn solve_all(vars: String) -> bool {
 
     let mut success = true;
     
@@ -61,75 +61,46 @@ fn solve_all() -> bool {
         break ;
     }
 
+    if ! success {
+        println!("Error");
+    } else {
+        for i in 0..vars.len() {
+            let mut variables = VARIABLEMAP.lock().unwrap();
+            let name = &vars[i..i+1];
+            let var = variables.get_mut(name).unwrap();
+
+            if var.state == VariableState::Undefined {
+                println!("{} is false", name);
+            }
+            else {
+                println!("{} is {:?}", name, var.state);
+            }
+        }
+    }
+
     success
 }
 
 fn solve_query(vars: String) -> bool {
 
-    variables::reset();
+	for i in 0..vars.len() {
 
-	'solve: loop {
-
-		for i in 0..vars.len() {
-
-			let var_name = &vars[i..i+1];
-			let mut var_tmp = {
-                let mut variables = VARIABLEMAP.lock().unwrap();
-
-                variables.get_mut(var_name).unwrap().clone()
-            };
-            let mut restart = false;
-
-            var_tmp.state = VariableState::Undefined;
-
-			for ref mut rule in &mut var_tmp.rules {
-
-				if rule.state != VariableState::Undefined {
-
-                    var_tmp.state = rule.state.clone();
-                    continue ;
-                }
-
-                rule.state = rule.solve();
-
-                if rule.state == VariableState::Undefined {
-
-                    continue ;
-                }
-
-                rule.display();
-                if var_tmp.state == VariableState::Undefined {
-
-                    var_tmp.state = rule.state.clone();
-                }
-                else if var_tmp.state != rule.state {
-
-                    println!("Error {:?} != {:?}", var_tmp.state, rule.state);
-                    return false;
-                }
-			}
-
-            {
-                let mut variables = VARIABLEMAP.lock().unwrap();
-
-                let var = variables.get_mut(var_name).unwrap();
-
-                if var.state != var_tmp.state {
-
-                    restart = true;
-                }
-                *var = var_tmp;
-            }
-
-            if restart {
-
-                continue 'solve;
-            }
-		}
-
-		break;
+		let name = &vars[i..i+1];
+		let mut var = {
+            let mut variables = VARIABLEMAP.lock().unwrap();
+            variables.get_mut(name).unwrap().clone()
+        };
+        if var.state != VariableState::Undefined {
+            println!("{} is {:?}", name, var.state);
+            continue ;
+        }
+        let state = var.solve();
+        if state == VariableState::Undefined {
+            println!("{} is false", name);
+        } else {
+            println!("{} is {:?}", name, state);
+        }
 	}
-
 	return true;
 }
 
@@ -161,42 +132,8 @@ fn handle_new_line(line: String) {
 
             let vars = &line[1..];
 
-            if !syntax::variables(&vars) {
-
-                println!("syntax error");
-            }
-            else {
-
-                for i in 0..vars.len() {
-                    let mut variables = VARIABLEMAP.lock().unwrap();
-                    let var_name = &vars[i..i+1];
-                    let var = variables.get_mut(var_name).unwrap();
-                    
-                    if var.state != VariableState::True {
-                        var.state = VariableState::Undefined;
-                    }
-                }
-
-                /*
-                if ! solve_query(vars.to_string()) {
-                    println!("contradiction");
-                }
-                */
-                if solve_all() {
-                    for i in 0..vars.len() {
-                        let mut variables = VARIABLEMAP.lock().unwrap();
-                        let var_name = &vars[i..i+1];
-                        let var = variables.get_mut(var_name).unwrap();
-
-                        if var.state == VariableState::Undefined {
-                            println!("{} is false", var_name);
-                        }
-                        else {
-                            println!("{} is {:?}", var_name, var.state);
-                        }
-                    }
-                }
-            }
+            if ! syntax::variables(&vars) { println!("syntax error"); }
+            else { solve_query(vars.to_string()); }
         },
         _ => {
 
