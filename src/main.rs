@@ -14,6 +14,8 @@ use variables::{ VARIABLEMAP, VariableState };
 mod btree;
 use btree::BTree;
 
+mod MyOption;
+
 mod syntax;
 
 extern crate regex;
@@ -35,29 +37,23 @@ fn solve_all(vars: String) -> bool {
     's: loop {
         for i in 0..variables::VARS.len() {
             let name = &variables::VARS[i..i+1];
-            let mut var = {
+            let var = {
                 let mut variables = VARIABLEMAP.lock().unwrap();
                 variables.get_mut(name).unwrap().clone()
             };
             if var.state == VariableState::Undefined {
-                let mut state = VariableState::Undefined;
-                for ref mut rule in &mut var.rules {
-                    rule.state = rule.solve();
-                    if state == VariableState::Undefined {
-                        state = rule.state.clone();
-                    }
-                    else if state != rule.state {
-                        println!("Error {:?} != {:?}", state, rule.state);
-                        state = VariableState::Undefined;
-                        success = false
-                    }
-                }
 
-                {
-                    let mut variables = VARIABLEMAP.lock().unwrap();
-                    let name = &variables::VARS[i..i+1];
-                    let ref mut var = variables.get_mut(name).unwrap();
-                    var.state = state;
+                match var.solve("".to_string()) {
+                    MyOption::MyOption::Some(state) => {
+                        let mut variables = VARIABLEMAP.lock().unwrap();
+                        let name = &variables::VARS[i..i+1];
+                        let ref mut var = variables.get_mut(name).unwrap();
+                        var.state = state;
+                    },
+                    MyOption::MyOption::Error(s) => {
+                        println!("Error: {}", s);
+                        return false;
+                    }
                 }
 
                 if var.state != VariableState::Undefined {
@@ -93,7 +89,7 @@ fn solve_query(vars: String) -> bool {
 	for i in 0..vars.len() {
 
 		let name = &vars[i..i+1];
-		let mut var = {
+		let var = {
             let mut variables = VARIABLEMAP.lock().unwrap();
             variables.get_mut(name).unwrap().clone()
         };
@@ -101,13 +97,15 @@ fn solve_query(vars: String) -> bool {
             println!("{} is {:?}", name, var.state);
             continue ;
         }
-        let state = var.solve();
-        if state == VariableState::Undefined {
-            println!("{} is false", name);
-        } else {
-            println!("{} is {:?}", name, state);
+        match var.solve("".to_string()) {
+            MyOption::MyOption::Some(state) => match state {
+                VariableState::Undefined => println!("{} is false", name),
+                _ => println!("{} is {:?}", name, state)
+            },
+            MyOption::MyOption::Error(s) => println!("Error: {}", s)
         }
 	}
+
 	return true;
 }
 

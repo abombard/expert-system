@@ -4,6 +4,8 @@ use std::sync::Mutex;
 
 use btree::BTree;
 
+use MyOption::MyOption;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum VariableState {
     Undefined,
@@ -18,27 +20,30 @@ pub struct Variable {
 }
 
 impl Variable {
-    pub fn solve(&self) -> VariableState {
+    pub fn solve(&self, mut closed: String) -> MyOption<VariableState> {
         let mut s = String::new();
         let mut state = VariableState::Undefined;
         for ref rule in &self.rules {
             let rule_state = {
-                match rule.solve() {
-                    VariableState::True => VariableState::True,
-                    _ => VariableState::False
+                match rule.solve(closed.clone()) {
+                    MyOption::Some(state) => match state {
+                        VariableState::True => VariableState::True,
+                        _ => VariableState::False
+                    },
+                    MyOption::Error(s) => return MyOption::Error(s)
                 }
             };
             if state == VariableState::Undefined {
                 state = rule_state.clone();
             }
             else if state != rule_state {
-                return VariableState::Undefined;
+                return MyOption::Error("Inconsistant state".to_string());
             }
             s.push_str(&rule.to_string());
             s.push_str(&"\n".to_string());
         }
         print!("{}", s);
-        state
+        MyOption::Some(state)
     }
 }
 
@@ -58,20 +63,5 @@ lazy_static! {
 
         Mutex::new(map)
     };
-}
-
-pub fn reset() {
-
-    let mut variables = VARIABLEMAP.lock().unwrap();
-
-    for i in 0..VARS.len() {
-
-        let var = variables.get_mut(&VARS[i..i+1]).unwrap();
-
-        for ref mut rule in &mut var.rules {
-
-            rule.state = VariableState::Undefined;
-        }
-    }
 }
 

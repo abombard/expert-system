@@ -3,6 +3,8 @@ use std::cmp::Ordering;
 
 use variables::{ VARIABLEMAP, VariableState };
 
+use MyOption::MyOption;
+
 #[derive(Clone)]
 pub struct BTreeNode {
     v: u8,
@@ -129,7 +131,7 @@ impl BTreeNode {
         }
     }
 
-    pub fn solve(&self) -> VariableState {
+    pub fn solve(&self, closed: String) -> MyOption<VariableState> {
 
         let mut result = {
 
@@ -137,7 +139,7 @@ impl BTreeNode {
 
                 let left = self.l.as_ref().unwrap();
 
-                left.solve()
+                left.solve(closed)
             }
             else if self.is_leaf() {
 
@@ -146,9 +148,13 @@ impl BTreeNode {
                     variables[&self.t[..]].clone()
                 };
                 if var.state == VariableState::Undefined {
-                    var.solve()
+                    if closed.contains(&self.t[..]) {
+                        MyOption::Error("Inconsistant state leading to infinite loop".to_string())
+                    } else {
+                        var.solve(closed + &self.t[..])
+                    }
                 } else {
-                    var.state.clone()
+                    MyOption::Some(var.state.clone())
                 }
             }
             else {
@@ -156,23 +162,32 @@ impl BTreeNode {
                 let left = self.l.as_ref().unwrap();
                 let right = self.r.as_ref().unwrap();
 
-                match &self.t[..] {
-                    "+" => BTreeNode::solve_and(left.solve(), right.solve()),
-                    "|" => BTreeNode::solve_or(left.solve(), right.solve()),
-                    "^" => BTreeNode::solve_xor(left.solve(), right.solve()),
-                    _ => panic!("Unexpected token {}", self.t)
-                }
+                let left = match left.solve(closed.clone()) {
+                    MyOption::Some(state) => state,
+                    MyOption::Error(s) => return MyOption::Error(s)
+                };
+                let right = match right.solve(closed.clone()) {
+                    MyOption::Some(state) => state,
+                    MyOption::Error(s) => return MyOption::Error(s)
+                };
 
+                let state = match &self.t[..] {
+                    "+" => BTreeNode::solve_and(left, right),
+                    "|" => BTreeNode::solve_or(left, right),
+                    "^" => BTreeNode::solve_xor(left, right),
+                    _ => panic!("Unexpected token {}", self.t)
+                };
+
+                MyOption::Some(state)
             }
 
         };
 
-		if self.t == "=>" && result == VariableState::False {
-			result = VariableState::Undefined;
-		}
-
         if self.n {
-            result = BTreeNode::reverse(result);
+            result = match result {
+                MyOption::Some(state) => MyOption::Some(BTreeNode::reverse(state)),
+                _ => result
+            };
         }
 
         result
@@ -189,7 +204,6 @@ pub struct SubRoot {
 #[derive(Clone)]
 pub struct BTree {
     pub root: Option<BTreeNode>,
-	pub state: VariableState,
 	root_list: LinkedList<SubRoot>,
 	neg: bool,
 }
@@ -198,7 +212,6 @@ impl BTree {
 	pub fn new() -> BTree {
 		BTree {
             root: None,
-			state: VariableState::Undefined,
 		    root_list: LinkedList::new(),
 			neg: false,
 		}
@@ -334,11 +347,11 @@ impl BTree {
         rhs
     }
 
-    pub fn solve(&self) -> VariableState {
+    pub fn solve(&self, closed: String) -> MyOption<VariableState> {
 
         let root = self.root.as_ref().unwrap();
 
-        root.solve()
+        root.solve(closed)
     }
 
  
