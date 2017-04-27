@@ -186,11 +186,15 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     if (args.len() != 2) {
-        panic!("Invalid number of arguments");
+        println!("Invalid number of arguments");
+        return;
     }
 
     let file = match File::open(&args[1]) {
-        Err(why) => panic!("couldn't open {}: {}", args[1], why.description()),
+        Err(why) => {
+            println!("couldn't open {}: {}", args[1], why.description());
+            return;
+        },
         Ok(file) => file,
     };
 
@@ -218,6 +222,10 @@ fn main() {
 
             write_prompt();
             continue ;
+        }
+
+        if (rule == "exit") {
+            return;
         }
 
         handle_new_line(rule);
