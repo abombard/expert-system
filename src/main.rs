@@ -167,7 +167,9 @@ fn handle_new_line(line: String) {
                     let var_name = &vars[i..i+1];
                     let var = variables.get_mut(var_name).unwrap();
                     
-                    var.state = VariableState::Undefined;
+                    if var.state != VariableState::True {
+                        var.state = VariableState::Undefined;
+                    }
                 }
 
                 /*
