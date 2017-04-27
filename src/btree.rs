@@ -141,9 +141,15 @@ impl BTreeNode {
             }
             else if self.is_leaf() {
 
-                let variables = VARIABLEMAP.lock().unwrap();
-
-                variables[&self.t[..]].state.clone()
+                let var = {
+                    let variables = VARIABLEMAP.lock().unwrap();
+                    variables[&self.t[..]].clone()
+                };
+                if var.state == VariableState::Undefined {
+                    var.solve()
+                } else {
+                    var.state.clone()
+                }
             }
             else {
 
