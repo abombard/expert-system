@@ -213,6 +213,7 @@ fn main() {
             handle_new_line(rule);
         }
     }
+    else {
 
     write_prompt();
     for line in stdin.lock().lines() {
@@ -233,5 +234,6 @@ fn main() {
         handle_new_line(rule);
 
         write_prompt();
+    }
     }
 }
