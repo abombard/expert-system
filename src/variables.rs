@@ -36,8 +36,10 @@ impl Variable {
             else if state != rule_state {
                 return MyOption::Error(format!("Inconsistant state {:?} != {:?}", state, rule_state));
             }
-            s.push_str(&rule.to_string());
-            s.push_str(&"\n".to_string());
+            if rule_state != VariableState::Undefined {
+                s.push_str(&rule.to_string());
+                s.push_str(&"\n".to_string());
+            }
         }
         if state != VariableState::Undefined {
             print!("{}", s);
