@@ -34,7 +34,7 @@ impl Variable {
                 state = rule_state.clone();
             }
             else if state != rule_state {
-                return MyOption::Error("Inconsistant state".to_string());
+                return MyOption::Error(format!("Inconsistant state {:?} != {:?}", state, rule_state));
             }
             s.push_str(&rule.to_string());
             s.push_str(&"\n".to_string());

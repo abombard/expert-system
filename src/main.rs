@@ -185,31 +185,33 @@ fn main() {
     let stdin = std::io::stdin();
     let args: Vec<String> = env::args().collect();
 
-    if (args.len() != 2) {
+    if (args.len() > 2) {
         println!("Invalid number of arguments");
         return;
     }
 
-    let file = match File::open(&args[1]) {
-        Err(why) => {
-            println!("couldn't open {}: {}", args[1], why.description());
-            return;
-        },
-        Ok(file) => file,
-    };
+    if (args.len() == 2) {
+        let file = match File::open(&args[1]) {
+            Err(why) => {
+                println!("couldn't open {}: {}", args[1], why.description());
+                return;
+            },
+            Ok(file) => file,
+        };
 
-    let file_content = BufReader::new(&file);
+        let file_content = BufReader::new(&file);
 
-    for line in file_content.lines() {
-        let s = line.unwrap();
-        let rule = re.replace_all(&s, "").to_string();
+        for line in file_content.lines() {
+            let s = line.unwrap();
+            let rule = re.replace_all(&s, "").to_string();
 
-        if rule.len() == 0 {
-            write_prompt();
-            continue ;
+            if rule.len() == 0 {
+                write_prompt();
+                continue ;
+            }
+
+            handle_new_line(rule);
         }
-
-        handle_new_line(rule);
     }
 
     write_prompt();
