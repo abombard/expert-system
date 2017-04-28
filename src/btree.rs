@@ -193,20 +193,13 @@ impl BTreeNode {
 
         };
 
-        if (&self.t[..] != "=>")
+        if (&self.t[..] == "=>")
         {
             result = match result {
                 MyOption::Some(state) => {
                     MyOption::Some(
                         match state {
-                            VariableState::False => {
-                                if self.n {
-                                    VariableState::True
-                                }
-                                else {
-                                    VariableState::Undefined
-                                }
-                            },
+                            VariableState::False => VariableState::Undefined,
                             VariableState::True => {
                                 if self.n {
                                     VariableState::False
