@@ -1,0 +1,18 @@
+B => A 
+C => A 
+# With =, A should be false. 
+=
+?A
+@
+# With =B, A should be true. 
+=B
+?A
+@
+# With =C, A should be true. 
+=C
+?A
+@
+# With =BC, A should be true. 
+=BC
+?A
+@
