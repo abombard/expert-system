@@ -141,6 +141,9 @@ fn handle_new_line(line: String) {
             if ! syntax::variables(&vars) { println!("syntax error: {}", line); }
             else { solve_query(vars.to_string()); }
         },
+        "@" => {
+            variables::reset();
+        },
         _ => {
 
             if !syntax::rule(line.as_str()) {
@@ -204,6 +207,12 @@ fn main() {
 
         for line in file_content.lines() {
             let s = line.unwrap();
+
+            if s.chars().next().unwrap() == '#' {
+                println!("{}", s);
+                continue ;
+            }
+
             let rule = re.replace_all(&s, "").to_string();
 
             if rule.len() == 0 {

@@ -50,6 +50,16 @@ impl Variable {
 
 pub const VARS: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+pub fn reset() {
+    for i in 0..VARS.len() {
+        let mut variables = VARIABLEMAP.lock().unwrap();
+        let var_name = &VARS[i..i+1];
+        let var = variables.get_mut(var_name).unwrap();
+
+        var.state = VariableState::Undefined;
+    }
+}
+
 lazy_static! {
     pub static ref VARIABLEMAP: Mutex<HashMap<&'static str, Variable>> = {
 
