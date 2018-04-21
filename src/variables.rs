@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 use btree::BTree;
 
-use MyOption::MyOption;
+use my_option::MyOption;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum VariableState {
@@ -33,7 +33,7 @@ impl Variable {
             if state == VariableState::Undefined {
                 state = rule_state.clone();
             }
-            else if state != rule_state {
+            else if state != rule_state && rule_state != VariableState::Undefined {
                 return MyOption::Error(format!("Inconsistant state {:?} != {:?}", state, rule_state));
             }
             if rule_state != VariableState::Undefined {

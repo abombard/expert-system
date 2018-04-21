@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 
 use variables::{ VARIABLEMAP, VariableState };
 
-use MyOption::MyOption;
+use my_option::MyOption;
 
 #[derive(Clone)]
 pub struct BTreeNode {
@@ -193,7 +193,7 @@ impl BTreeNode {
 
         };
 
-        if (&self.t[..] == "=>")
+        if &self.t[..] == "=>"
         {
             result = match result {
                 MyOption::Some(state) => {
@@ -389,6 +389,7 @@ impl BTree {
  
 }
 
+#[allow(dead_code)]
 fn main() {
     let mut tree = BTree::new();
 
@@ -427,5 +428,4 @@ fn main() {
     println!("{}", s);
 
     tree.display();
-
 }

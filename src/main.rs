@@ -12,9 +12,9 @@ mod variables;
 use variables::{ VARIABLEMAP, VariableState };
 
 mod btree;
-use btree::BTree;
 
-mod MyOption;
+mod my_option;
+use my_option::MyOption;
 
 mod syntax;
 
@@ -30,6 +30,7 @@ fn write_prompt() {
     std::io::stdout().flush().unwrap();
 }
 
+#[allow(dead_code)]
 fn solve_all(vars: String) -> bool {
 
     let success = true;
@@ -44,13 +45,13 @@ fn solve_all(vars: String) -> bool {
             if var.state == VariableState::Undefined {
 
                 match var.solve("".to_string()) {
-                    MyOption::MyOption::Some(state) => {
+                    MyOption::Some(state) => {
                         let mut variables = VARIABLEMAP.lock().unwrap();
                         let name = &variables::VARS[i..i+1];
                         let ref mut var = variables.get_mut(name).unwrap();
                         var.state = state;
                     },
-                    MyOption::MyOption::Error(s) => {
+                    MyOption::Error(s) => {
                         println!("Error: {}", s);
                         return false;
                     }
@@ -98,11 +99,11 @@ fn solve_query(vars: String) -> bool {
             continue ;
         }
         match var.solve("".to_string()) {
-            MyOption::MyOption::Some(state) => match state {
+            my_option::MyOption::Some(state) => match state {
                 VariableState::Undefined => println!("{} is false", name),
                 _ => println!("{} is {:?}", name, state)
             },
-            MyOption::MyOption::Error(s) => println!("Error: {}", s)
+            my_option::MyOption::Error(s) => println!("Error: {}", s)
         }
 	}
 
@@ -185,12 +186,12 @@ fn main() {
     let stdin = std::io::stdin();
     let args: Vec<String> = env::args().collect();
 
-    if (args.len() > 2) {
+    if args.len() > 2 {
         println!("Invalid number of arguments");
         return;
     }
 
-    if (args.len() == 2) {
+    if args.len() == 2 {
         let file = match File::open(&args[1]) {
             Err(why) => {
                 println!("couldn't open {}: {}", args[1], why.description());
@@ -227,7 +228,7 @@ fn main() {
             continue ;
         }
 
-        if (rule == "exit") {
+        if rule == "exit" {
             return;
         }
 
